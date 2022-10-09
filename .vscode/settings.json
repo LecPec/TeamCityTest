@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "array": "cpp",
+        "iosfwd": "cpp",
+        "vector": "cpp",
+        "type_traits": "cpp",
+        "__config": "cpp",
+        "new": "cpp",
+        "iostream": "cpp",
+        "atomic": "cpp"
+    }
+}
