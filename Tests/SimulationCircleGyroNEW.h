@@ -15,6 +15,17 @@
 #include "../Particles/GyroKineticPusher.h"
 #include "../ParticleLeaveEmission/ParticleEmission.h"
 #include "../ParticleLeaveEmission/ParticleLeave.h"
+#include "../Collisions/NeutralGas.h"
+#include "../Collisions/EnergyCrossSection.h"
+#include "../Collisions/Collision.h"
+#include "../Collisions/NullCollisions.h"
+#include "../Field/PoissonSolver.h"
+#include "../Field/PoissonSolverCircle.h"
+#include "../Tools/ParticlesLogger.h"
+#include "../Tools/Logger.h"
+#include "../Tools/Helpers.h"
+#include "../Interpolation/Interpolation.h"
+#include <omp.h>
 
 #define E_M 9.10938356e-31
 #define EV 1.6021766208e-19
@@ -178,8 +189,9 @@ void test_simulation_circle_gyro_new() {
     /*****************************************************/
     // Particle Init
     scalar m_e = E_M;
-    GyroKineticParticles electrons(m_e, -1*EV, 0, ptcls_per_macro);
-    Particles ions(m_ion, 1*EV, 0, ptcls_per_macro);
+    ParticlesConstant *ptclConstants = new ParticlesConstant();
+    GyroKineticParticles electrons(m_e, -1*EV, 0, ptclConstants->ElectronsTypeString(), ptcls_per_macro);
+    Particles ions(m_ion, 1*EV, 0, ptclConstants->IonsTypeString(), ptcls_per_macro);
     /*****************************************************/
     // Particle initial injection
     int seed = 1 + rank;
@@ -581,6 +593,12 @@ void test_simulation_circle_gyro_new() {
 
             /// !!!END OF THE MAIN CYCLE!!!
             /// LOG OF DATA IS PERFORMED BELOW
+
+            if (it == 10)
+            {
+                electrons.GetParticlesConfiguration();
+                ions.GetParticlesConfiguration();
+            }
 
             if (it % timeLogStep == 0)
             {

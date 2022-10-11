@@ -11,8 +11,6 @@
 void electron_null_collisionsNew(ElectronNeutralElasticCollision& electron_elastic, Ionization& ionization);
 void electron_null_collisions(ElectronNeutralElasticCollision& electron_elastic, Ionization& ionization);
 void electron_null_collisionsMpi(ElectronNeutralElasticCollision &electron_elastic, Ionization &ionization);
-void electron_null_collisionsMPI(EnergyCrossSection& elastic_electron_sigma, EnergyCrossSection& ionization_sigma,
-                                 const int coll_step, const scalar dt, NeutralGas& gas, Particles& electrons, Particles& ions, const scalar m_ion);
 void ion_null_collisions(IonNeutralElasticCollision& ion_elastic);
 
 

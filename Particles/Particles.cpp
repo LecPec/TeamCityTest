@@ -191,6 +191,31 @@ Particles::Particles(scalar m, scalar q, int N, scalar N_per_macro) {
     Bz.resize(Ntot, 0);
 }
 
+Particles::Particles(scalar m, scalar q, int N, string type, scalar N_per_macro) {
+    Ntot = N;
+    if (N_per_macro > 1) {
+        ptcls_per_macro = N_per_macro;
+    } else {
+        ptcls_per_macro = 1;
+    }
+    ptclType = type;
+    mass = m * ptcls_per_macro;
+    charge = q * ptcls_per_macro;
+    Bx_const = 0;
+    By_const = 0;
+    Bz_const = 0;
+    x.resize(Ntot, 0);
+    y.resize(Ntot, 0);
+    vx.resize(Ntot, 0);
+    vy.resize(Ntot, 0);
+    vz.resize(Ntot, 0);
+    Ex.resize(Ntot, 0);
+    Ey.resize(Ntot, 0);
+    Bx.resize(Ntot, 0);
+    By.resize(Ntot, 0);
+    Bz.resize(Ntot, 0);
+}
+
 scalar Particles::get_ptcls_per_macro() const {
     return ptcls_per_macro;
 }
@@ -235,13 +260,6 @@ void Particles::set_const_magnetic_field(const array<scalar, 3> &B) {
     Bx_const = B[0];
     By_const = B[1];
     Bz_const = B[2];
-}
-
-void Particles::AppendB()
-{
-    Bx.push_back(Bx_const);
-    By.push_back(By_const);
-    Bz.push_back(Bz_const);
 }
 
 void Particles::SetNtot(int NtotNew)
@@ -462,103 +480,6 @@ array<array<scalar, NX>, NX> Particles::GetJ(){
     return J;
 }
 
-void Particles::ClearData()
-{
-    vx.clear();
-    vy.clear();
-    vz.clear();
-    x.clear();
-    y.clear();
-    Bx.clear();
-    By.clear();
-    Bz.clear();
-    Ex.clear();
-    Ey.clear();
-    Ntot = 0;
-}
-
-void Particles::AssignData(
-        const vector<scalar>& vx_,
-        const vector<scalar>& vy_,
-        const vector<scalar>& vz_,
-        const vector<scalar>& x_,
-        const vector<scalar>& y_,
-        const vector<scalar>& Bx_,
-        const vector<scalar>& By_,
-        const vector<scalar>& Bz_,
-        const vector<scalar>& Ex_,
-        const vector<scalar>& Ey_)
-{
-    //ClearData();
-
-    /*vx.assign(begin(vx_), end(vx_));
-    vy.assign(begin(vy_), end(vy_));
-    vz.assign(begin(vz_), end(vz_));
-    x.assign(begin(x_), end(x_));
-    y.assign(begin(y_), end(y_));
-    Bx.assign(begin(Bx_), end(Bx_));
-    By.assign(begin(By_), end(By_));
-    Bz.assign(begin(Bz_), end(Bz_));
-    Ex.assign(begin(Ex_), end(Ex_));
-    Ey.assign(begin(Ey_), end(Ey_));*/
-
-    for (int i = 0; i < Ntot; ++i)
-    {
-        vx[i] = vx_[i];
-        vy[i] = vy_[i];
-        vz[i] = vz_[i];
-        x[i] = x_[i];
-        y[i] = y_[i];
-        Bx[i] = Bx_[i];
-        By[i] = By_[i];
-        Bz[i] = Bz_[i];
-        Ex[i] = Ex_[i];
-        Ey[i] = Ey_[i];
-    }
-
-    //Ntot = vx.size();
-}
-
-void Particles::InsertData(
-        const vector<scalar>& vx_,
-        const vector<scalar>& vy_,
-        const vector<scalar>& vz_,
-        const vector<scalar>& x_,
-        const vector<scalar>& y_,
-        const vector<scalar>& Bx_,
-        const vector<scalar>& By_,
-        const vector<scalar>& Bz_,
-        const vector<scalar>& Ex_,
-        const vector<scalar>& Ey_)
-{
-    /*vx.insert(end(vx), begin(vx_), end(vx_));
-    vy.insert(end(vy), begin(vy_), end(vy_));
-    vz.insert(end(vz), begin(vz_), end(vz_));
-    x.insert(end(x), begin(x_), end(x_));
-    y.insert(end(y), begin(y_), end(y_));
-    Bx.insert(end(Bx), begin(Bx_), end(Bx_));
-    By.insert(end(By), begin(By_), end(By_));
-    Bz.insert(end(Bz), begin(Bz_), end(Bz_));
-    Ex.insert(end(Ex), begin(Ex_), end(Ex_));
-    Ey.insert(end(Ey), begin(Ey_), end(Ey_));*/
-
-    for (int i = 0; i < x_.size(); ++i)
-    {
-        vx.push_back(vx_[i]);
-        vy.push_back(vy_[i]);
-        vz.push_back(vz_[i]);
-        x.push_back(x_[i]);
-        y.push_back(y_[i]);
-        Bx.push_back(Bx_[i]);
-        By.push_back(By_[i]);
-        Bz.push_back(Bz_[i]);
-        Ex.push_back(Ex_[i]);
-        Ey.push_back(Ey_[i]);
-    }
-
-    Ntot = vx.size();
-}
-
 void Particles::Resize(int _size)
     {
         x.resize(_size);
@@ -584,6 +505,27 @@ array<vector<scalar>, 3> Particles::GetVelocities()
     return {vx, vy, vz};
 }
 
+//Particles configuration log
+void Particles::GetParticlesConfiguration()
+{
+    ofstream outCoords(ptclType + "Coords.txt");
+    ofstream outVel(ptclType + "Velocities.txt");
+    ofstream outE(ptclType + "E.txt");
+    ofstream outB(ptclType + "B.txt");
+
+    outCoords << "Ntot: " << Ntot << endl;
+    outCoords << "PtclsPerMacro: " << ptcls_per_macro << endl;
+    outCoords << "Mass: " << mass / ptcls_per_macro << endl;
+    outCoords << "Charge: " << charge / ptcls_per_macro << endl;
+
+    for (int i = 0; i < Ntot; ++i)
+    {
+        outCoords << x[i] << ' ' << y[i] << endl;
+        outVel << vx[i] << ' ' << vy[i] << ' ' << vz[i] << endl;
+        outB << Bx[i] << ' ' << By[i] << ' ' << Bz[i] << endl;
+        outE << Ex[i] << ' ' << Ey[i] << endl;
+    }
+}
 
 
 

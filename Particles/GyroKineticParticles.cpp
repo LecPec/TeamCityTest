@@ -29,7 +29,7 @@ array<scalar, 3> GyroKineticParticles::get_velocity(const int ptcl_idx) const {
     return Particles::get_velocity(ptcl_idx);
 }
 
-GyroKineticParticles::GyroKineticParticles(scalar m, scalar q, int N, scalar N_per_macro) : Particles(m, q, N,
+GyroKineticParticles::GyroKineticParticles(scalar m, scalar q, int N, string type, scalar N_per_macro) : Particles(m, q, N, type,
                                                                                                       N_per_macro) {
     vx_c.resize(Ntot);
     vy_c.resize(Ntot);
@@ -233,5 +233,29 @@ void GyroKineticParticles::GyroPusherMPI(scalar dt)
         MPI_Send(&vx_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 6611 * 71, MPI_COMM_WORLD);
         MPI_Send(&vy_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 6612 * 71, MPI_COMM_WORLD);
         MPI_Send(&vz_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 6613 * 71, MPI_COMM_WORLD);
+    }
+}
+
+//Particles configuration log
+void GyroKineticParticles::GetParticlesConfiguration()
+{
+    ofstream outCoords(ptclType + "Coords.txt");
+    ofstream outVel(ptclType + "Velocities.txt");
+    ofstream outVelC(ptclType + "VelocitiesC.txt");
+    ofstream outE(ptclType + "E.txt");
+    ofstream outB(ptclType + "B.txt");
+
+    outCoords << "Ntot: " << Ntot << endl;
+    outCoords << "PtclsPerMacro: " << ptcls_per_macro << endl;
+    outCoords << "Mass: " << mass / ptcls_per_macro << endl;
+    outCoords << "Charge: " << charge / ptcls_per_macro << endl;
+
+    for (int i = 0; i < Ntot; ++i)
+    {
+        outCoords << x[i] << ' ' << y[i] << endl;
+        outVel << vx[i] << ' ' << vy[i] << ' ' << vz[i] << endl;
+        outVelC << vx_c[i] << ' ' << vy_c[i] << ' ' << vz_c[i] << endl;
+        outB << Bx[i] << ' ' << By[i] << ' ' << Bz[i] << endl;
+        outE << Ex[i] << ' ' << Ey[i] << endl;
     }
 }

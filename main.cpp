@@ -1,10 +1,10 @@
 #include <iostream>
-#include "Tests/Simulation.h"
-#include "Tests/Test_PoissonSolverCircle.h"
-#include "Tests/SimulationCircle.h"
-#include "Tests/SimulationCircleGyro.h"
+//#include "Tests/Simulation.h"
+//#include "Tests/Test_PoissonSolverCircle.h"
+//#include "Tests/SimulationCircle.h"
+//#include "Tests/SimulationCircleGyro.h"
 #include "Tests/SimulationCircleGyroNEW.h"
-#include "Tests/SimulationCircleNEW.h"
+//#include "Tests/SimulationCircleNEW.h"
 
 int main() {
     //simulation();

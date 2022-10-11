@@ -11,13 +11,16 @@
 #include "../Tools/ProjectTypes.h"
 #include "../Tools/Matrix.h"
 #include "../Tools/Grid.h"
+#include "../Tools/Names.h"
 #include <vector>
 #include <array>
+#include <fstream>
 using namespace std;
 
 class Particles {
 protected:
     int Ntot;
+    string ptclType;
     scalar ptcls_per_macro, mass, charge, Bx_const, By_const, Bz_const;
 public:
     vector<scalar> vx;
@@ -31,6 +34,7 @@ public:
     vector<scalar> Ex;
     vector<scalar> Ey;
     Particles(scalar m, scalar q, int N, scalar N_per_macro = 1);
+    Particles(scalar m, scalar q, int N, string type, scalar N_per_macro = 1);
 
     virtual void append(const array<scalar, 2>& position, const array<scalar, 3>& velocity);
 
@@ -86,31 +90,8 @@ public:
     void SetNtot(int NtotNew);
     void AddNtot(int dN);
 
-    void AppendB();
-
-    void ClearData();
-    void AssignData(
-        const vector<scalar>& vx,
-        const vector<scalar>& vy,
-        const vector<scalar>& vz,
-        const vector<scalar>& x,
-        const vector<scalar>& y,
-        const vector<scalar>& Bx,
-        const vector<scalar>& By,
-        const vector<scalar>& Bz,
-        const vector<scalar>& Ex,
-        const vector<scalar>& Ey);
-    void InsertData(
-        const vector<scalar>& vx,
-        const vector<scalar>& vy,
-        const vector<scalar>& vz,
-        const vector<scalar>& x,
-        const vector<scalar>& y,
-        const vector<scalar>& Bx,
-        const vector<scalar>& By,
-        const vector<scalar>& Bz,
-        const vector<scalar>& Ex,
-        const vector<scalar>& Ey);
+    //Particles configuration log
+    virtual void GetParticlesConfiguration();
 };
 
 
