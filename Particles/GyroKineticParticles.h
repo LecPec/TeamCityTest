@@ -25,6 +25,7 @@ public:
 
     //Particles configuration log
     void GetParticlesConfiguration() override;
+    void InitConfigurationFromFile() override;
 };
 
 

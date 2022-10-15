@@ -6,7 +6,7 @@
 #include <cmath>
 #include <omp.h>
 #include <mpi.h>
-#define NUM_THREADS 100
+#define NUM_THREADS 4
 
 void __LinearFieldInterpolation(scalar *Ex, scalar *Ey, const scalar *x, const scalar *y, const scalar *Ex_grid,
                                 const scalar *Ey_grid, const Grid &grid, int Ntot) 
@@ -72,7 +72,6 @@ void __LinearChargeInterpolation(scalar *rho, const scalar *x, const scalar *y, 
 
         hx = (x[i] - cell_x * grid.dx) / grid.dx;
         hy = (y[i] - cell_y * grid.dy) / grid.dy;
-
         #pragma omp atomic
         rho[cell_x * Ny + cell_y] += (charge * (1 - hx) * (1 - hy) / (grid.dx*grid.dy));
         #pragma omp atomic
@@ -118,7 +117,7 @@ void LinearChargeInterpolationMPI(Matrix& rhoMatrix, const Particles& particles,
         }
 
         __LinearChargeInterpolation(rhoProc.data_ptr(), particles.x.data(), particles.y.data(), grid, particles.get_charge() * particles.get_ptcls_per_macro(), NtotPerZeroProc);
-        
+
         rhoMatrix.data = rhoProc.data;
         vector<scalar> rhoRecv;
         rhoRecv.resize(Nx * Ny);

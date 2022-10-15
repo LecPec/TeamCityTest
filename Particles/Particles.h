@@ -92,6 +92,7 @@ public:
 
     //Particles configuration log
     virtual void GetParticlesConfiguration();
+    virtual void InitConfigurationFromFile();
 };
 
 

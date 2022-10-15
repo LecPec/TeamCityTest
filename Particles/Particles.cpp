@@ -508,15 +508,17 @@ array<vector<scalar>, 3> Particles::GetVelocities()
 //Particles configuration log
 void Particles::GetParticlesConfiguration()
 {
-    ofstream outCoords(ptclType + "Coords.txt");
-    ofstream outVel(ptclType + "Velocities.txt");
-    ofstream outE(ptclType + "E.txt");
-    ofstream outB(ptclType + "B.txt");
+    ParticlesConstant *ptclConstants = new ParticlesConstant();
+    ofstream outBaseData(ptclConstants->InitialConfigurationFolderOut() + ptclType + ptclConstants->BaseFileName());
+    ofstream outCoords(ptclConstants->InitialConfigurationFolderOut() + ptclType + ptclConstants->CoordinatesFileSuffix());
+    ofstream outVel(ptclConstants->InitialConfigurationFolderOut() + ptclType + ptclConstants->VelocityFileSuffix());
+    ofstream outE(ptclConstants->InitialConfigurationFolderOut() + ptclType + ptclConstants->ElectricFieldFileSuffix());
+    ofstream outB(ptclConstants->InitialConfigurationFolderOut() + ptclType + ptclConstants->MagneticFieldFileSuffix());
 
-    outCoords << "Ntot: " << Ntot << endl;
-    outCoords << "PtclsPerMacro: " << ptcls_per_macro << endl;
-    outCoords << "Mass: " << mass / ptcls_per_macro << endl;
-    outCoords << "Charge: " << charge / ptcls_per_macro << endl;
+    outBaseData << Ntot << endl;
+    outBaseData << ptcls_per_macro << endl;
+    outBaseData << mass / ptcls_per_macro << endl;
+    outBaseData << charge / ptcls_per_macro << endl;
 
     for (int i = 0; i < Ntot; ++i)
     {
@@ -524,6 +526,65 @@ void Particles::GetParticlesConfiguration()
         outVel << vx[i] << ' ' << vy[i] << ' ' << vz[i] << endl;
         outB << Bx[i] << ' ' << By[i] << ' ' << Bz[i] << endl;
         outE << Ex[i] << ' ' << Ey[i] << endl;
+    }
+}
+
+void Particles::InitConfigurationFromFile()
+{
+    ParticlesConstant *ptclConstants = new ParticlesConstant();
+    ifstream fBaseData(ptclConstants->InitialConfigurationFolderIn() + ptclType + ptclConstants->BaseFileName());
+    ifstream fCoords(ptclConstants->InitialConfigurationFolderIn() + ptclType + ptclConstants->CoordinatesFileSuffix());
+    ifstream fVel(ptclConstants->InitialConfigurationFolderIn() + ptclType + ptclConstants->VelocityFileSuffix());
+    ifstream fE(ptclConstants->InitialConfigurationFolderIn() + ptclType + ptclConstants->ElectricFieldFileSuffix());
+    ifstream fB(ptclConstants->InitialConfigurationFolderIn() + ptclType + ptclConstants->MagneticFieldFileSuffix());
+
+    //<<Base data init>>//
+    vector<scalar> baseData;
+
+    while(!fBaseData.eof())
+    {
+        scalar tmpScalar;
+        fBaseData >> tmpScalar;
+        baseData.push_back(tmpScalar);
+    }
+
+    int N = baseData[0];
+    scalar N_per_macro = baseData[1];
+    scalar m = baseData[2];
+    scalar q = baseData[3];
+    Ntot = N;
+    if (N_per_macro > 1) {
+        ptcls_per_macro = N_per_macro;
+    } else {
+        ptcls_per_macro = 1;
+    }
+    mass = m * ptcls_per_macro;
+    charge = q * ptcls_per_macro;
+    Bx_const = 0;
+    By_const = 0;
+    Bz_const = 0;
+    x.resize(Ntot, 0);
+    y.resize(Ntot, 0);
+    vx.resize(Ntot, 0);
+    vy.resize(Ntot, 0);
+    vz.resize(Ntot, 0);
+    Ex.resize(Ntot, 0);
+    Ey.resize(Ntot, 0);
+    Bx.resize(Ntot, 0);
+    By.resize(Ntot, 0);
+    Bz.resize(Ntot, 0);
+
+    //<<Particles data init>>
+    int numOfParticle = 0;
+
+    while(!fCoords.eof())
+    {
+        fCoords >> x[numOfParticle] >> y[numOfParticle];
+        fVel >> vx[numOfParticle] >> vy[numOfParticle] >> vz[numOfParticle];
+        fE >> Ex[numOfParticle] >> Ey[numOfParticle];
+        fB >> Bx[numOfParticle] >> By[numOfParticle] >> Bz[numOfParticle];
+
+        numOfParticle++;
     }
 }
 

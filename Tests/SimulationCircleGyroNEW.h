@@ -131,6 +131,7 @@ void test_simulation_circle_gyro_new() {
     int gyro_coeff = 100;
     int it_num = 1e8;
     scalar ptcls_per_cell = 1; //svs
+    int seed = 1;
 
     // real system
     scalar R = 0.26;
@@ -190,14 +191,22 @@ void test_simulation_circle_gyro_new() {
     // Particle Init
     scalar m_e = E_M;
     ParticlesConstant *ptclConstants = new ParticlesConstant();
+
     GyroKineticParticles electrons(m_e, -1*EV, 0, ptclConstants->ElectronsTypeString(), ptcls_per_macro);
+    if (rank == 0)
+        electrons.InitConfigurationFromFile();
+
     Particles ions(m_ion, 1*EV, 0, ptclConstants->IonsTypeString(), ptcls_per_macro);
+    if (rank == 0)
+        ions.InitConfigurationFromFile();
     /*****************************************************/
     // Particle initial injection
-    int seed = 1 + rank;
-    scalar init_energy = 0.1*EV;
-    init_particle_emission(electrons, radius_injection, center_injection, Ntot, init_energy, seed);
-    init_particle_emission(ions, radius_injection, center_injection, Ntot, init_energy, seed);
+    if (rank != 0)
+    {
+        scalar init_energy = 0.1*EV;
+        init_particle_emission(electrons, radius_injection, center_injection, Ntot, init_energy, seed);
+        init_particle_emission(ions, radius_injection, center_injection, Ntot, init_energy, seed);
+    }
     /*****************************************************/
     // Set const magnetic field to particles
     array<scalar, 3> mf = {0, 0, B_scaled};
@@ -327,8 +336,11 @@ void test_simulation_circle_gyro_new() {
     // PIC cycle
     clock_t start = clock();
     //scalar start = omp_get_wtime();
-    electrons.vel_pusher(-0.5*dt);
-    ions.vel_pusher(-0.5*dt*ion_step);
+    if (rank != 0)
+    {
+        electrons.vel_pusher(-0.5*dt);
+        ions.vel_pusher(-0.5*dt*ion_step);
+    }
 
     int Ntot_ionized = 0;
     int Ntot_cold_cathode_leave = 0;
@@ -370,7 +382,7 @@ void test_simulation_circle_gyro_new() {
         /// </summary>
 
         t0Charge += omp_get_wtime();
-        LinearChargeInterpolationMPI(rho_e, electrons, grid);
+        LinearChargeInterpolationMPI(rho_e, electrons, grid); // mistake is somwhere here
         tCharge += omp_get_wtime();
 
         if (it % ion_step == 0) 
@@ -521,6 +533,7 @@ void test_simulation_circle_gyro_new() {
             particle_leave(electrons, grid, radius_anode, domain_center, dt, rho_e);
             
             Ntot_anode_leave += electrons.get_Ntot() - Ntot_tmp;
+
             if (it % ion_step == 0)
             {
                 particle_leave(ions, grid, radius_anode, domain_center, dt, rho_i);
