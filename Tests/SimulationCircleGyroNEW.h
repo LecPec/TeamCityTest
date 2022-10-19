@@ -193,25 +193,14 @@ void test_simulation_circle_gyro_new() {
     ParticlesConstant *ptclConstants = new ParticlesConstant();
 
     GyroKineticParticles electrons(m_e, -1*EV, 0, ptclConstants->ElectronsTypeString(), ptcls_per_macro);
-    if (rank == 0)
-        electrons.InitConfigurationFromFile();
-
     Particles ions(m_ion, 1*EV, 0, ptclConstants->IonsTypeString(), ptcls_per_macro);
-    if (rank == 0)
-        ions.InitConfigurationFromFile();
-    /*****************************************************/
-    // Particle initial injection
-    if (rank != 0)
-    {
-        scalar init_energy = 0.1*EV;
-        init_particle_emission(electrons, radius_injection, center_injection, Ntot, init_energy, seed);
-        init_particle_emission(ions, radius_injection, center_injection, Ntot, init_energy, seed);
-    }
-    /*****************************************************/
-    // Set const magnetic field to particles
+    
+    enum InitializationMode {InitialConfiguration = 0, FromFile = 1};
     array<scalar, 3> mf = {0, 0, B_scaled};
-    electrons.set_const_magnetic_field(mf);
-    ions.set_const_magnetic_field(mf);
+    scalar init_energy = 0.1*EV;
+    SetParticlesData(InitializationMode::FromFile, electrons, mf, radius_injection, center_injection, Ntot, init_energy, seed, dt);
+    SetParticlesData(InitializationMode::FromFile, ions, mf, radius_injection, center_injection, Ntot, init_energy, seed, dt);
+
     /*****************************************************/
     // Set particle leave on Anode
     scalar radius_anode = (Nx - 1) * dx / 2;
@@ -335,12 +324,6 @@ void test_simulation_circle_gyro_new() {
     /*****************************************************/
     // PIC cycle
     clock_t start = clock();
-    //scalar start = omp_get_wtime();
-    if (rank != 0)
-    {
-        electrons.vel_pusher(-0.5*dt);
-        ions.vel_pusher(-0.5*dt*ion_step);
-    }
 
     int Ntot_ionized = 0;
     int Ntot_cold_cathode_leave = 0;
