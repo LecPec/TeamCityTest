@@ -103,3 +103,18 @@ void init_particle_emission(Particles &particles, const scalar emission_radius, 
         particles.append(pos, vel);
     }
 }
+
+void SetParticlesData(bool mode, Particles& particles, array<scalar, 3> mf, scalar radius_injection, array<scalar, 2>
+                     center_injection, int Ntot, scalar init_energy, int seed, scalar dt)
+{
+    if (mode == 0)
+    {
+        init_particle_emission(particles, radius_injection, center_injection, Ntot, init_energy, seed);
+        particles.set_const_magnetic_field(mf);
+        particles.vel_pusher(-0.5 * dt);
+    }
+    else
+    {
+        particles.InitConfigurationFromFile();
+    }
+}
