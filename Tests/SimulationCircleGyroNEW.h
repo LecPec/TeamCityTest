@@ -198,8 +198,8 @@ void test_simulation_circle_gyro_new() {
     enum InitializationMode {InitialConfiguration = 0, FromFile = 1};
     array<scalar, 3> mf = {0, 0, B_scaled};
     scalar init_energy = 0.1*EV;
-    SetParticlesData(InitializationMode::FromFile, electrons, mf, radius_injection, center_injection, Ntot, init_energy, seed, dt);
-    SetParticlesData(InitializationMode::FromFile, ions, mf, radius_injection, center_injection, Ntot, init_energy, seed, dt);
+    SetParticlesData(InitializationMode::InitialConfiguration, electrons, mf, radius_injection, center_injection, Ntot, init_energy, seed, dt);
+    SetParticlesData(InitializationMode::InitialConfiguration, ions, mf, radius_injection, center_injection, Ntot, init_energy, seed, dt);
 
     /*****************************************************/
     // Set particle leave on Anode
@@ -335,7 +335,7 @@ void test_simulation_circle_gyro_new() {
     ions.ZeroAnodeCurrent();
 
     int NtotElectrons = electrons.get_Ntot(), NtotIons = ions.get_Ntot();
-    int logStep = 10000;
+    int logStep = 1000;
 
     double t0Field = 0, tField = 0;
     double t0Charge = 0, tCharge = 0;
@@ -589,6 +589,11 @@ void test_simulation_circle_gyro_new() {
 
             /// !!!END OF THE MAIN CYCLE!!!
             /// LOG OF DATA IS PERFORMED BELOW
+            if (it == 7e5)
+            {
+                electrons.GetParticlesConfiguration();
+                ions.GetParticlesConfiguration();
+            }
 
             if (it == 10)
             {

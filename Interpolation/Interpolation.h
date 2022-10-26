@@ -8,6 +8,7 @@
 #include "../Tools/Matrix.h"
 #include "../Tools/Grid.h"
 #include "../Particles/Particles.h"
+#define NUM_THREADS 4
 
 void __LinearFieldInterpolation(scalar Ex[], scalar Ey[], const scalar x[], const scalar y[],
                               const scalar Ex_grid[], const scalar Ey_grid[], const Grid& grid, int Ntot);

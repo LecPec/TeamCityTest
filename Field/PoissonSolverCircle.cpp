@@ -65,7 +65,7 @@ void PoissonSolverCircle(Matrix &phi, const Matrix &rho, const Grid &grid, const
     int i = 0, j = 0;
 
     for (int it = 0; it < max_iter; it++) {
-        #pragma omp parallel for private(i, j)
+        #pragma omp parallel for private(i, j) num_threads(NUM_THREADS)
         for(i = 0; i < Nx; i++) {
             for(j = 0; j < Ny; j++) {
                 if (pow(i - R, 2) + pow(j - R, 2) < pow(R, 2)) {

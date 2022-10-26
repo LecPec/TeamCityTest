@@ -8,6 +8,7 @@
 
 #include "../Tools/Matrix.h"
 #include "../Tools/Grid.h"
+#define NUM_THREADS 4
 
 void InitDirichletConditionsCircle(Matrix& phi, const Grid& grid, const int R);
 

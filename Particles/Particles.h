@@ -5,7 +5,7 @@
 #ifndef CPP_2D_PIC_PARTICLES_H
 #define CPP_2D_PIC_PARTICLES_H
 #define NX 69
-
+#define NUM_THREADS 4
 #define ELECTRON_CHARGE 1.6e-19
 
 #include "../Tools/ProjectTypes.h"
@@ -14,6 +14,7 @@
 #include "../Tools/Names.h"
 #include <vector>
 #include <array>
+#include <algorithm>
 #include <fstream>
 using namespace std;
 

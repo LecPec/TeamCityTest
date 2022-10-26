@@ -5,7 +5,6 @@
 #include "GyroKineticPusher.h"
 #include <cmath>
 #include <omp.h>
-#define NUM_THREADS 100
 
 scalar DotProduct(const scalar v1[], const scalar v2[]) {
     return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];

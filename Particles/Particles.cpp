@@ -63,64 +63,85 @@ void Particles::pusherMPI(const scalar dt)
     MPI_Status status;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &commSize);
+    scalar mass = this->get_mass() * this->get_ptcls_per_macro();
+    scalar charge = this->get_charge() * this->get_ptcls_per_macro();
+    int numOfPhysValues = 10;
 
     if (rank == 0){
+        int Ntot = get_Ntot();
         int Ntot_per_proc = Ntot / commSize;
         int Ntot_per_0_proc = Ntot / commSize + Ntot % commSize;
 
+        int fragmentSize = x.size();
+        int totalSize = fragmentSize * numOfPhysValues;
+
+        MPI_Datatype ParticlesDataType;
+        int blockLength[numOfPhysValues];
+        int displacements[numOfPhysValues];
+        for (int i = 0; i < numOfPhysValues; ++i)
+        {
+            blockLength[i] = Ntot_per_proc;
+            displacements[i] = i * Ntot_per_proc;
+        }
+        MPI_Type_indexed(numOfPhysValues, blockLength, displacements, MPI_DOUBLE, &ParticlesDataType);
+        MPI_Type_commit(&ParticlesDataType);
+
+        vector<scalar> particlesData;
+        int start = 0;
+
         for (int proc = 1; proc < commSize; ++proc){
             MPI_Send(&Ntot_per_proc, 1, MPI_INT, proc, 5665, MPI_COMM_WORLD);
-            MPI_Send(&(x)[Ntot_per_0_proc + (proc - 1) * Ntot_per_proc], Ntot_per_proc, MPI_DOUBLE, proc, 660 * 71, MPI_COMM_WORLD);
-            MPI_Send(&(y)[Ntot_per_0_proc + (proc - 1) * Ntot_per_proc], Ntot_per_proc, MPI_DOUBLE, proc, 661 * 71, MPI_COMM_WORLD);
-            MPI_Send(&(vx)[Ntot_per_0_proc + (proc - 1) * Ntot_per_proc], Ntot_per_proc, MPI_DOUBLE, proc, 662 * 71, MPI_COMM_WORLD);
-            MPI_Send(&(vy)[Ntot_per_0_proc + (proc - 1) * Ntot_per_proc], Ntot_per_proc, MPI_DOUBLE, proc, 663 * 71, MPI_COMM_WORLD);
-            MPI_Send(&(vz)[Ntot_per_0_proc + (proc - 1) * Ntot_per_proc], Ntot_per_proc, MPI_DOUBLE, proc, 664 * 71, MPI_COMM_WORLD);
-            MPI_Send(&(Ex)[Ntot_per_0_proc + (proc - 1) * Ntot_per_proc], Ntot_per_proc, MPI_DOUBLE, proc, 665 * 71, MPI_COMM_WORLD);
-            MPI_Send(&(Ey)[Ntot_per_0_proc + (proc - 1) * Ntot_per_proc], Ntot_per_proc, MPI_DOUBLE, proc, 666 * 71, MPI_COMM_WORLD);
-            MPI_Send(&(Bx)[Ntot_per_0_proc + (proc - 1) * Ntot_per_proc], Ntot_per_proc, MPI_DOUBLE, proc, 667 * 71, MPI_COMM_WORLD);
-            MPI_Send(&(By)[Ntot_per_0_proc + (proc - 1) * Ntot_per_proc], Ntot_per_proc, MPI_DOUBLE, proc, 668 * 71, MPI_COMM_WORLD);
-            MPI_Send(&(Bz)[Ntot_per_0_proc + (proc - 1) * Ntot_per_proc], Ntot_per_proc, MPI_DOUBLE, proc, 6699 * 71, MPI_COMM_WORLD);
+
+            start = Ntot_per_0_proc + (proc - 1) * Ntot_per_proc;
+            particlesData.insert(particlesData.end(), x.begin() + start, x.begin() + start + Ntot_per_proc);
+            particlesData.insert(particlesData.end(), y.begin() + start, y.begin() + start + Ntot_per_proc);
+            particlesData.insert(particlesData.end(), vx.begin() + start, vx.begin() + start + Ntot_per_proc);
+            particlesData.insert(particlesData.end(), vy.begin() + start, vy.begin() + start + Ntot_per_proc);
+            particlesData.insert(particlesData.end(), vz.begin() + start, vz.begin() + start + Ntot_per_proc);
+            particlesData.insert(particlesData.end(), Bx.begin() + start, Bx.begin() + start + Ntot_per_proc);
+            particlesData.insert(particlesData.end(), By.begin() + start, By.begin() + start + Ntot_per_proc);
+            particlesData.insert(particlesData.end(), Bz.begin() + start, Bz.begin() + start + Ntot_per_proc);
+            particlesData.insert(particlesData.end(), Ex.begin() + start, Ex.begin() + start + Ntot_per_proc);
+            particlesData.insert(particlesData.end(), Ey.begin() + start, Ey.begin() + start + Ntot_per_proc);
+            MPI_Send(&particlesData[0], 1, ParticlesDataType, proc, 8778, MPI_COMM_WORLD);
+
+            particlesData.resize(0);
         }
 
-        ParticlePush(x.data(), y.data(), vx.data(), vy.data(), vz.data(),
+        ParticlePush(x.data(), y.data(),
+                    vx.data(), vy.data(), vz.data(),
                     Ex.data(), Ey.data(), Bx.data(), By.data(), Bz.data(),
                     dt, charge, mass, Ntot_per_0_proc);
 
-        vector<scalar> x_recv;
-        vector<scalar> y_recv;
-        vector<scalar> vx_recv;
-        vector<scalar> vy_recv;
-        vector<scalar> vz_recv;
+        vector<scalar> recvParticlesData;
+        int numOfNotNeededPhysValues = 5;
+        int sizeOfRecievedData = (numOfPhysValues - numOfNotNeededPhysValues) * Ntot_per_proc;
+        recvParticlesData.resize(sizeOfRecievedData);
 
-        x_recv.resize(Ntot_per_proc);
-        y_recv.resize(Ntot_per_proc);
-        vx_recv.resize(Ntot_per_proc);
-        vy_recv.resize(Ntot_per_proc);
-        vz_recv.resize(Ntot_per_proc);
-        for (int proc = 1; proc < commSize; ++proc)
-        {
-            MPI_Recv(&x_recv[0], Ntot_per_proc, MPI_DOUBLE, proc, 669 * 71, MPI_COMM_WORLD, &status);
-            MPI_Recv(&y_recv[0], Ntot_per_proc, MPI_DOUBLE, proc, 6610 * 71, MPI_COMM_WORLD, &status);
-            MPI_Recv(&vx_recv[0], Ntot_per_proc, MPI_DOUBLE, proc, 6611 * 71, MPI_COMM_WORLD, &status);
-            MPI_Recv(&vy_recv[0], Ntot_per_proc, MPI_DOUBLE, proc, 6612 * 71, MPI_COMM_WORLD, &status);
-            MPI_Recv(&vz_recv[0], Ntot_per_proc, MPI_DOUBLE, proc, 6613 * 71, MPI_COMM_WORLD, &status);
+        for (int proc = 1; proc < commSize; ++proc){
+            MPI_Recv(&recvParticlesData[0], recvParticlesData.size(), MPI_DOUBLE, proc, 8998, MPI_COMM_WORLD, &status);
 
             int start = Ntot_per_0_proc + (proc - 1) * Ntot_per_proc;
             int finish = Ntot_per_0_proc + proc * Ntot_per_proc;
-            int ip_proc = 0;
+            #pragma omp parallel for num_threads(NUM_THREADS)
             for (int ip = start; ip < finish; ++ip){
-                x[ip] = x_recv[ip_proc];
-                y[ip] = y_recv[ip_proc];
-                vx[ip] = vx_recv[ip_proc];
-                vy[ip] = vy_recv[ip_proc];
-                vz[ip] = vz_recv[ip_proc];
-                ip_proc++;
+                x[ip] = recvParticlesData[0 * Ntot_per_proc + ip - start];
+                y[ip] = recvParticlesData[1 * Ntot_per_proc + ip - start];
+                vx[ip] = recvParticlesData[2 * Ntot_per_proc + ip - start];
+                vy[ip] = recvParticlesData[3 * Ntot_per_proc + ip - start];
+                vz[ip] = recvParticlesData[4 * Ntot_per_proc + ip - start];
             }
         }
     }
     else{
         int Ntot_per_proc = 0;
         MPI_Recv(&Ntot_per_proc, 1, MPI_INT, 0, 5665, MPI_COMM_WORLD, &status);
+
+        int sizeOfProcData = numOfPhysValues * Ntot_per_proc;
+
+        vector<scalar> particlesData;
+        particlesData.resize(sizeOfProcData);
+        MPI_Recv(&particlesData[0], sizeOfProcData, MPI_DOUBLE, 0, 8778, MPI_COMM_WORLD, &status);
 
         vector<scalar> x_proc;
         vector<scalar> y_proc;
@@ -132,38 +153,31 @@ void Particles::pusherMPI(const scalar dt)
         vector<scalar> Bx_proc;
         vector<scalar> By_proc;
         vector<scalar> Bz_proc;
-        x_proc.resize(Ntot_per_proc);
-        y_proc.resize(Ntot_per_proc);
-        vx_proc.resize(Ntot_per_proc);
-        vy_proc.resize(Ntot_per_proc);
-        vz_proc.resize(Ntot_per_proc);
-        Ex_proc.resize(Ntot_per_proc);
-        Ey_proc.resize(Ntot_per_proc);
-        Bx_proc.resize(Ntot_per_proc);
-        By_proc.resize(Ntot_per_proc);
-        Bz_proc.resize(Ntot_per_proc);
-
-        MPI_Recv(&x_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 660 * 71, MPI_COMM_WORLD, &status);
-        MPI_Recv(&y_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 661 * 71, MPI_COMM_WORLD, &status);
-        MPI_Recv(&vx_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 662 * 71, MPI_COMM_WORLD, &status);
-        MPI_Recv(&vy_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 663 * 71, MPI_COMM_WORLD, &status);
-        MPI_Recv(&vz_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 664 * 71, MPI_COMM_WORLD, &status);
-        MPI_Recv(&Ex_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 665 * 71, MPI_COMM_WORLD, &status);
-        MPI_Recv(&Ey_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 666 * 71, MPI_COMM_WORLD, &status);
-        MPI_Recv(&Bx_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 667 * 71, MPI_COMM_WORLD, &status);
-        MPI_Recv(&By_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 668 * 71, MPI_COMM_WORLD, &status);
-        MPI_Recv(&Bz_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 6699 * 71, MPI_COMM_WORLD, &status);
         
-
-        ParticlePush(x_proc.data(), y_proc.data(), vx_proc.data(), vy_proc.data(), vz_proc.data(),
+        x_proc.insert(x_proc.end(), particlesData.begin(), particlesData.begin() + Ntot_per_proc);
+        y_proc.insert(y_proc.end(), particlesData.begin() + Ntot_per_proc, particlesData.begin() + 2 * Ntot_per_proc);
+        vx_proc.insert(vx_proc.end(), particlesData.begin() + 2 * Ntot_per_proc, particlesData.begin() + 3 * Ntot_per_proc);
+        vy_proc.insert(vy_proc.end(), particlesData.begin() + 3 * Ntot_per_proc, particlesData.begin() + 4 * Ntot_per_proc);
+        vz_proc.insert(vz_proc.end(), particlesData.begin() + 4 * Ntot_per_proc, particlesData.begin() + 5 * Ntot_per_proc);
+        Bx_proc.insert(Bx_proc.end(), particlesData.begin() + 5 * Ntot_per_proc, particlesData.begin() + 6 * Ntot_per_proc);
+        By_proc.insert(By_proc.end(), particlesData.begin() + 6 * Ntot_per_proc, particlesData.begin() + 7 * Ntot_per_proc);
+        Bz_proc.insert(Bz_proc.end(), particlesData.begin() + 7 * Ntot_per_proc, particlesData.begin() + 8 * Ntot_per_proc);
+        Ex_proc.insert(Ex_proc.end(), particlesData.begin() + 8 * Ntot_per_proc, particlesData.begin() + 9 * Ntot_per_proc);
+        Ey_proc.insert(Ey_proc.end(), particlesData.begin() + 9 * Ntot_per_proc, particlesData.begin() + 10 * Ntot_per_proc);
+        
+        ParticlePush(x_proc.data(), y_proc.data(),
+                    vx_proc.data(), vy_proc.data(), vz_proc.data(),
                     Ex_proc.data(), Ey_proc.data(), Bx_proc.data(), By_proc.data(), Bz_proc.data(),
-                    dt, charge, mass, Ntot_per_proc);  
+                    dt, charge, mass, Ntot_per_proc);
 
-        MPI_Send(&x_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 669 * 71, MPI_COMM_WORLD);
-        MPI_Send(&y_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 6610 * 71, MPI_COMM_WORLD);
-        MPI_Send(&vx_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 6611 * 71, MPI_COMM_WORLD);
-        MPI_Send(&vy_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 6612 * 71, MPI_COMM_WORLD);
-        MPI_Send(&vz_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 6613 * 71, MPI_COMM_WORLD);
+        particlesData.resize(0);
+        particlesData.insert(particlesData.end(), x_proc.begin(), x_proc.end());
+        particlesData.insert(particlesData.end(), y_proc.begin(), y_proc.end());
+        particlesData.insert(particlesData.end(), vx_proc.begin(), vx_proc.end());
+        particlesData.insert(particlesData.end(), vy_proc.begin(), vy_proc.end());
+        particlesData.insert(particlesData.end(), vz_proc.begin(), vz_proc.end()); 
+
+        MPI_Send(&particlesData[0], particlesData.size(), MPI_DOUBLE, 0, 8998, MPI_COMM_WORLD);
     }
 }
 
