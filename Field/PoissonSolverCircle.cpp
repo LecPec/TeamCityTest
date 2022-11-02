@@ -3,6 +3,7 @@
 //
 
 #include "PoissonSolverCircle.h"
+#include "../Tools/Names.h"
 #include <cmath>
 #include <cassert>
 #include <mpi.h>
@@ -64,8 +65,11 @@ void PoissonSolverCircle(Matrix &phi, const Matrix &rho, const Grid &grid, const
     scalar dy2  = grid.dy*grid.dy;
     int i = 0, j = 0;
 
+    auto *settings = new SettingNames();
+    int numThreads = settings->GetNumberOfThreadsPerCore();
+
     for (int it = 0; it < max_iter; it++) {
-        #pragma omp parallel for private(i, j) num_threads(NUM_THREADS)
+        #pragma omp parallel for private(i, j) num_threads(numThreads)
         for(i = 0; i < Nx; i++) {
             for(j = 0; j < Ny; j++) {
                 if (pow(i - R, 2) + pow(j - R, 2) < pow(R, 2)) {

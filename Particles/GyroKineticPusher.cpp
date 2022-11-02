@@ -3,6 +3,7 @@
 //
 
 #include "GyroKineticPusher.h"
+//#include "../Tools/Names.h"
 #include <cmath>
 #include <omp.h>
 
@@ -71,7 +72,9 @@ void GyroUpdateSingleVelocityBoris(scalar &vel_x_c, scalar &vel_y_c, scalar &vel
 void GyroUpdateVelocity(scalar vel_x_c[], scalar vel_y_c[], scalar vel_z_c[], scalar vel_x[], scalar vel_y[], scalar vel_z[],
                         const scalar Ex[], const scalar Ey[], const scalar Bx[], const scalar By[], const scalar Bz[],
                         const scalar dt, const scalar q, const scalar m, const int Ntot) {
-    #pragma omp parallel for
+    auto *settings = new SettingNames();
+    int numThreads = settings->GetNumberOfThreadsPerCore();
+    #pragma omp parallel for num_threads(numThreads)
     for (int ip = 0; ip < Ntot; ip++) {
         GyroUpdateSingleVelocityBoris(vel_x_c[ip], vel_y_c[ip], vel_z_c[ip], vel_x[ip], vel_y[ip], vel_z[ip], Ex[ip], Ey[ip], Bx[ip], By[ip], Bz[ip], dt, q, m);
     }

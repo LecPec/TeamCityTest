@@ -4,12 +4,14 @@
 
 #include "Particles.h"
 #include "Pusher.h"
+//#include "../Tools/Names.h"
 #include <algorithm>
 #include <cassert>
 #include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <mpi.h>
+
 
 void Particles::append(const array<scalar, 2> &position, const array<scalar, 3> &velocity) {
     x.push_back(position[0]);
@@ -57,128 +59,70 @@ void Particles::pusher(const scalar dt) {
     ParticlePush(x.data(), y.data(), vx.data(), vy.data(), vz.data(), Ex.data(), Ey.data(), Bx.data(), By.data(), Bz.data(), dt, charge, mass, Ntot);
 }
 
-void Particles::pusherMPI(const scalar dt)
+void Particles::pusherMPI(scalar dt)
 {
     int rank, commSize;
     MPI_Status status;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &commSize);
+    int Ntot_per_proc = Ntot / commSize;
+    int Ntot_per_0_proc = Ntot_per_proc + Ntot % commSize;
     scalar mass = this->get_mass() * this->get_ptcls_per_macro();
     scalar charge = this->get_charge() * this->get_ptcls_per_macro();
-    int numOfPhysValues = 10;
 
-    if (rank == 0){
-        int Ntot = get_Ntot();
-        int Ntot_per_proc = Ntot / commSize;
-        int Ntot_per_0_proc = Ntot / commSize + Ntot % commSize;
+    MPI_Bcast(&Ntot_per_proc, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&Ntot_per_0_proc, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    int numOfPtclsToCalculate  = (rank == 0) ? Ntot_per_0_proc : Ntot_per_proc;
 
-        int fragmentSize = x.size();
-        int totalSize = fragmentSize * numOfPhysValues;
-
-        MPI_Datatype ParticlesDataType;
-        int blockLength[numOfPhysValues];
-        int displacements[numOfPhysValues];
-        for (int i = 0; i < numOfPhysValues; ++i)
-        {
-            blockLength[i] = Ntot_per_proc;
-            displacements[i] = i * Ntot_per_proc;
-        }
-        MPI_Type_indexed(numOfPhysValues, blockLength, displacements, MPI_DOUBLE, &ParticlesDataType);
-        MPI_Type_commit(&ParticlesDataType);
-
-        vector<scalar> particlesData;
-        int start = 0;
-
-        for (int proc = 1; proc < commSize; ++proc){
-            MPI_Send(&Ntot_per_proc, 1, MPI_INT, proc, 5665, MPI_COMM_WORLD);
-
-            start = Ntot_per_0_proc + (proc - 1) * Ntot_per_proc;
-            particlesData.insert(particlesData.end(), x.begin() + start, x.begin() + start + Ntot_per_proc);
-            particlesData.insert(particlesData.end(), y.begin() + start, y.begin() + start + Ntot_per_proc);
-            particlesData.insert(particlesData.end(), vx.begin() + start, vx.begin() + start + Ntot_per_proc);
-            particlesData.insert(particlesData.end(), vy.begin() + start, vy.begin() + start + Ntot_per_proc);
-            particlesData.insert(particlesData.end(), vz.begin() + start, vz.begin() + start + Ntot_per_proc);
-            particlesData.insert(particlesData.end(), Bx.begin() + start, Bx.begin() + start + Ntot_per_proc);
-            particlesData.insert(particlesData.end(), By.begin() + start, By.begin() + start + Ntot_per_proc);
-            particlesData.insert(particlesData.end(), Bz.begin() + start, Bz.begin() + start + Ntot_per_proc);
-            particlesData.insert(particlesData.end(), Ex.begin() + start, Ex.begin() + start + Ntot_per_proc);
-            particlesData.insert(particlesData.end(), Ey.begin() + start, Ey.begin() + start + Ntot_per_proc);
-            MPI_Send(&particlesData[0], 1, ParticlesDataType, proc, 8778, MPI_COMM_WORLD);
-
-            particlesData.resize(0);
-        }
-
-        ParticlePush(x.data(), y.data(),
-                    vx.data(), vy.data(), vz.data(),
-                    Ex.data(), Ey.data(), Bx.data(), By.data(), Bz.data(),
-                    dt, charge, mass, Ntot_per_0_proc);
-
-        vector<scalar> recvParticlesData;
-        int numOfNotNeededPhysValues = 5;
-        int sizeOfRecievedData = (numOfPhysValues - numOfNotNeededPhysValues) * Ntot_per_proc;
-        recvParticlesData.resize(sizeOfRecievedData);
-
-        for (int proc = 1; proc < commSize; ++proc){
-            MPI_Recv(&recvParticlesData[0], recvParticlesData.size(), MPI_DOUBLE, proc, 8998, MPI_COMM_WORLD, &status);
-
-            int start = Ntot_per_0_proc + (proc - 1) * Ntot_per_proc;
-            int finish = Ntot_per_0_proc + proc * Ntot_per_proc;
-            #pragma omp parallel for num_threads(NUM_THREADS)
-            for (int ip = start; ip < finish; ++ip){
-                x[ip] = recvParticlesData[0 * Ntot_per_proc + ip - start];
-                y[ip] = recvParticlesData[1 * Ntot_per_proc + ip - start];
-                vx[ip] = recvParticlesData[2 * Ntot_per_proc + ip - start];
-                vy[ip] = recvParticlesData[3 * Ntot_per_proc + ip - start];
-                vz[ip] = recvParticlesData[4 * Ntot_per_proc + ip - start];
-            }
-        }
+    int counts[commSize], displs[commSize];
+    counts[0] = Ntot_per_0_proc;
+    displs[0] = 0;
+    for (int i = 1; i < commSize; ++i)
+    {
+        counts[i] = Ntot_per_proc;
+        displs[i] = Ntot_per_0_proc + (i - 1) * Ntot_per_proc;
     }
-    else{
-        int Ntot_per_proc = 0;
-        MPI_Recv(&Ntot_per_proc, 1, MPI_INT, 0, 5665, MPI_COMM_WORLD, &status);
 
-        int sizeOfProcData = numOfPhysValues * Ntot_per_proc;
+    vector<scalar> xProc;
+    vector<scalar> yProc;
+    vector<scalar> vxProc;
+    vector<scalar> vyProc;
+    vector<scalar> vzProc;
+    vector<scalar> BxProc;
+    vector<scalar> ByProc;
+    vector<scalar> BzProc;
+    vector<scalar> ExProc;
+    vector<scalar> EyProc;
+    xProc.resize(numOfPtclsToCalculate);
+    yProc.resize(numOfPtclsToCalculate);
+    vxProc.resize(numOfPtclsToCalculate);
+    vyProc.resize(numOfPtclsToCalculate);
+    vzProc.resize(numOfPtclsToCalculate);
+    BxProc.resize(numOfPtclsToCalculate);
+    ByProc.resize(numOfPtclsToCalculate);
+    BzProc.resize(numOfPtclsToCalculate);
+    ExProc.resize(numOfPtclsToCalculate);
+    EyProc.resize(numOfPtclsToCalculate);
 
-        vector<scalar> particlesData;
-        particlesData.resize(sizeOfProcData);
-        MPI_Recv(&particlesData[0], sizeOfProcData, MPI_DOUBLE, 0, 8778, MPI_COMM_WORLD, &status);
+    MPI_Scatterv(&x[0], counts, displs, MPI_DOUBLE, &xProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&y[0], counts, displs, MPI_DOUBLE, &yProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&vx[0], counts, displs, MPI_DOUBLE, &vxProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&vy[0], counts, displs, MPI_DOUBLE, &vyProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&vz[0], counts, displs, MPI_DOUBLE, &vzProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&Bx[0], counts, displs, MPI_DOUBLE, &BxProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&By[0], counts, displs, MPI_DOUBLE, &ByProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&Bz[0], counts, displs, MPI_DOUBLE, &BzProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&Ex[0], counts, displs, MPI_DOUBLE, &ExProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&Ey[0], counts, displs, MPI_DOUBLE, &EyProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-        vector<scalar> x_proc;
-        vector<scalar> y_proc;
-        vector<scalar> vx_proc;
-        vector<scalar> vy_proc;
-        vector<scalar> vz_proc;
-        vector<scalar> Ex_proc;
-        vector<scalar> Ey_proc;
-        vector<scalar> Bx_proc;
-        vector<scalar> By_proc;
-        vector<scalar> Bz_proc;
-        
-        x_proc.insert(x_proc.end(), particlesData.begin(), particlesData.begin() + Ntot_per_proc);
-        y_proc.insert(y_proc.end(), particlesData.begin() + Ntot_per_proc, particlesData.begin() + 2 * Ntot_per_proc);
-        vx_proc.insert(vx_proc.end(), particlesData.begin() + 2 * Ntot_per_proc, particlesData.begin() + 3 * Ntot_per_proc);
-        vy_proc.insert(vy_proc.end(), particlesData.begin() + 3 * Ntot_per_proc, particlesData.begin() + 4 * Ntot_per_proc);
-        vz_proc.insert(vz_proc.end(), particlesData.begin() + 4 * Ntot_per_proc, particlesData.begin() + 5 * Ntot_per_proc);
-        Bx_proc.insert(Bx_proc.end(), particlesData.begin() + 5 * Ntot_per_proc, particlesData.begin() + 6 * Ntot_per_proc);
-        By_proc.insert(By_proc.end(), particlesData.begin() + 6 * Ntot_per_proc, particlesData.begin() + 7 * Ntot_per_proc);
-        Bz_proc.insert(Bz_proc.end(), particlesData.begin() + 7 * Ntot_per_proc, particlesData.begin() + 8 * Ntot_per_proc);
-        Ex_proc.insert(Ex_proc.end(), particlesData.begin() + 8 * Ntot_per_proc, particlesData.begin() + 9 * Ntot_per_proc);
-        Ey_proc.insert(Ey_proc.end(), particlesData.begin() + 9 * Ntot_per_proc, particlesData.begin() + 10 * Ntot_per_proc);
-        
-        ParticlePush(x_proc.data(), y_proc.data(),
-                    vx_proc.data(), vy_proc.data(), vz_proc.data(),
-                    Ex_proc.data(), Ey_proc.data(), Bx_proc.data(), By_proc.data(), Bz_proc.data(),
-                    dt, charge, mass, Ntot_per_proc);
+    ParticlePush(xProc.data(), yProc.data(), vxProc.data(), vyProc.data(), vzProc.data(),
+                                    ExProc.data(), EyProc.data(), BxProc.data(), ByProc.data(), BzProc.data(), dt, charge, mass, numOfPtclsToCalculate);
 
-        particlesData.resize(0);
-        particlesData.insert(particlesData.end(), x_proc.begin(), x_proc.end());
-        particlesData.insert(particlesData.end(), y_proc.begin(), y_proc.end());
-        particlesData.insert(particlesData.end(), vx_proc.begin(), vx_proc.end());
-        particlesData.insert(particlesData.end(), vy_proc.begin(), vy_proc.end());
-        particlesData.insert(particlesData.end(), vz_proc.begin(), vz_proc.end()); 
-
-        MPI_Send(&particlesData[0], particlesData.size(), MPI_DOUBLE, 0, 8998, MPI_COMM_WORLD);
-    }
+    MPI_Gatherv(&xProc[0], numOfPtclsToCalculate, MPI_DOUBLE, &x[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(&yProc[0], numOfPtclsToCalculate, MPI_DOUBLE, &y[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(&vxProc[0], numOfPtclsToCalculate, MPI_DOUBLE, &vx[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(&vyProc[0], numOfPtclsToCalculate, MPI_DOUBLE, &vy[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(&vzProc[0], numOfPtclsToCalculate, MPI_DOUBLE, &vz[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 
 Particles::Particles(scalar m, scalar q, int N, scalar N_per_macro) {

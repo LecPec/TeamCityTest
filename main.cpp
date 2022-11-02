@@ -4,6 +4,7 @@
 //#include "Tests/SimulationCircle.h"
 //#include "Tests/SimulationCircleGyro.h"
 #include "Tests/SimulationCircleGyroNEW.h"
+//#include "Tests/TestPusher.h"
 //#include "Tests/SimulationCircleNEW.h"
 
 int main() {
@@ -16,6 +17,7 @@ int main() {
     MPI_Comm_size(MPI_COMM_WORLD, &commSize);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     double t0 = omp_get_wtime();
+    //TestPusherMpi();
     test_simulation_circle_gyro_new();
     double t = omp_get_wtime();
 

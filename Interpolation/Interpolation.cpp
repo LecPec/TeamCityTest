@@ -3,6 +3,7 @@
 //
 
 #include "Interpolation.h"
+//#include "../Tools/Names.h"
 #include <cmath>
 #include <omp.h>
 #include <mpi.h>
@@ -12,7 +13,11 @@ void __LinearFieldInterpolation(scalar *Ex, scalar *Ey, const scalar *x, const s
 {
     int cell_x, cell_y, Ny=grid.Ny;
     scalar hx, hy;
-    #pragma omp parallel for private(hx, hy, cell_x, cell_y) num_threads(NUM_THREADS)
+
+    auto *settings = new SettingNames();
+    int numThreads = settings->GetNumberOfThreadsPerCore(); 
+
+    #pragma omp parallel for private(hx, hy, cell_x, cell_y) num_threads(numThreads)
     for (int i = 0; i < Ntot; i++) {
         cell_x = floor(x[i]/grid.dx);
         cell_y = floor(y[i]/grid.dy);
@@ -36,7 +41,11 @@ void __LinearFieldInterpolationMPI(scalar efx[], scalar efy[], const scalar x[],
 {
     int cell_x, cell_y, Ny=grid.Ny;
     scalar hx, hy;
-    #pragma omp parallel for private(hx, hy, cell_x, cell_y) num_threads(NUM_THREADS)
+
+    auto *settings = new SettingNames();
+    int numThreads = settings->GetNumberOfThreadsPerCore(); 
+
+    #pragma omp parallel for private(hx, hy, cell_x, cell_y) num_threads(numThreads)
     for (int i = 0; i < Ntot; i++) {
         cell_x = floor(x[i]/grid.dx);
         cell_y = floor(y[i]/grid.dy);
@@ -64,7 +73,10 @@ void __LinearChargeInterpolation(scalar *rho, const scalar *x, const scalar *y, 
     for (int i = 0; i < grid.Nx * grid.Ny; ++i)
         rho[i] = 0;
 
-    #pragma omp parallel for private(hx, hy, cell_x, cell_y) num_threads(NUM_THREADS)
+    auto *settings = new SettingNames();
+    int numThreads = settings->GetNumberOfThreadsPerCore(); 
+
+    #pragma omp parallel for private(hx, hy, cell_x, cell_y) num_threads(numThreads)
     for (int i = 0; i < Ntot; i++) {
         cell_x = floor(x[i] / grid.dx);
         cell_y = floor(y[i] / grid.dy);
@@ -100,76 +112,37 @@ void LinearChargeInterpolationMPI(Matrix& rhoMatrix, const Particles& particles,
     MPI_Comm_size(MPI_COMM_WORLD, &commSize);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     int Nx = grid.Nx, Ny = grid.Ny;
+    int NtotPerProc = particles.get_Ntot() / commSize;
+    int NtotPerZeroProc = NtotPerProc + particles.get_Ntot() % commSize;
 
-    int numOfPhysValues = 2;
+    Matrix rho(Nx, Ny);
+    Matrix rhoSum(Nx, Ny);
 
-    Matrix rhoProc(Ny, Nx);
+    MPI_Bcast(&NtotPerProc, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&NtotPerZeroProc, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    int numOfPtclsToCalculate  = (rank == 0) ? NtotPerZeroProc : NtotPerProc;
 
-    if (rank == 0){
-        int Ntot = particles.get_Ntot();
-        int NtotPerZeroProc = Ntot / commSize + Ntot % commSize;
-        int NtotPerProc = Ntot / commSize;
-
-        MPI_Datatype ParticlesDataType;
-        int blockLength[numOfPhysValues];
-        int displacements[numOfPhysValues];
-        for (int i = 0; i < numOfPhysValues; ++i)
-        {
-            blockLength[i] = NtotPerProc;
-            displacements[i] = i * NtotPerProc;
-        }
-        MPI_Type_indexed(numOfPhysValues, blockLength, displacements, MPI_DOUBLE, &ParticlesDataType);
-        MPI_Type_commit(&ParticlesDataType);
-
-        vector<scalar> particlesData;
-        int start = 0;
-        for (int proc = 1; proc < commSize; ++proc)
-        {
-            MPI_Send(&NtotPerProc, 1, MPI_INT, proc, 1991, MPI_COMM_WORLD);
-
-            start = NtotPerZeroProc + (proc - 1) * NtotPerProc;
-            particlesData.insert(particlesData.end(), particles.x.begin() + start, particles.x.begin() + start + NtotPerProc);
-            particlesData.insert(particlesData.end(), particles.y.begin() + start, particles.y.begin() + start + NtotPerProc);
-
-            MPI_Send(&particlesData[0], 1, ParticlesDataType, proc, 1221, MPI_COMM_WORLD);
-
-            particlesData.clear();
-        }
-
-        __LinearChargeInterpolation(rhoProc.data_ptr(), particles.x.data(), particles.y.data(), grid, particles.get_charge() * particles.get_ptcls_per_macro(), NtotPerZeroProc);
-
-        rhoMatrix.data = rhoProc.data;
-        vector<scalar> rhoRecv;
-        rhoRecv.resize(Nx * Ny);
-
-        for (int proc = 1; proc < commSize; ++proc)
-        {
-            MPI_Recv(&rhoRecv[0], Nx * Ny, MPI_DOUBLE, proc, 878777, MPI_COMM_WORLD, &status);
-
-            #pragma omp parallel for num_threads(NUM_THREADS)
-            for (int i = 0; i < Nx * Ny; ++i)
-                rhoMatrix.data[i] += rhoRecv[i];
-        }
+    int counts[commSize], displs[commSize];
+    counts[0] = NtotPerZeroProc;
+    displs[0] = 0;
+    for (int i = 1; i < commSize; ++i)
+    {
+        counts[i] = NtotPerProc;
+        displs[i] = NtotPerZeroProc + (i - 1) * NtotPerProc;
     }
-    else{
-        int NtotPerProc = 0;
-        MPI_Recv(&NtotPerProc, 1, MPI_INT, 0, 1991, MPI_COMM_WORLD, &status);
+    vector<scalar> x;
+    vector<scalar> y;
+    x.resize(numOfPtclsToCalculate);
+    y.resize(numOfPtclsToCalculate);
 
-        int sizeOfProcData = numOfPhysValues * NtotPerProc;
+    MPI_Scatterv(&particles.x[0], counts, displs, MPI_DOUBLE, &x[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&particles.y[0], counts, displs, MPI_DOUBLE, &y[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-        vector<scalar> particlesData;
-        particlesData.resize(sizeOfProcData);
-        MPI_Recv(&particlesData[0], sizeOfProcData, MPI_DOUBLE, 0, 1221, MPI_COMM_WORLD, &status);
+    __LinearChargeInterpolation(rho.data_ptr(), x.data(), y.data(), grid, particles.get_charge() * particles.get_ptcls_per_macro(), numOfPtclsToCalculate);
 
-        vector<scalar> xProc, yProc;
-        xProc.insert(xProc.end(), particlesData.begin(), particlesData.begin() + NtotPerProc);
-        yProc.insert(yProc.end(), particlesData.begin() + NtotPerProc, particlesData.begin() + 2 * NtotPerProc);
-
-        __LinearChargeInterpolation(rhoProc.data_ptr(), xProc.data(), yProc.data(), grid, particles.get_charge() * particles.get_ptcls_per_macro(), NtotPerProc);
-
-        MPI_Send(&rhoProc.data[0], Nx * Ny, MPI_DOUBLE, 0, 878777, MPI_COMM_WORLD);
-    }
-
+    MPI_Reduce(&rho.data[0], &rhoSum.data[0], Nx * Ny, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    if (rank == 0) rhoMatrix = rhoSum;
+    
 }
 
 void LinearFieldInterpolationMPI(Particles &particles, Matrix &Ex, Matrix &Ey, const Grid& grid)
@@ -181,105 +154,46 @@ void LinearFieldInterpolationMPI(Particles &particles, Matrix &Ex, Matrix &Ey, c
     MPI_Comm_size(MPI_COMM_WORLD, &commSize);
     
     int Nx = grid.Nx, Ny = grid.Ny;
-    int numOfPhysValues = 6;
+    int NtotPerProc = particles.get_Ntot() / commSize;
+    int NtotPerZeroProc = NtotPerProc + particles.get_Ntot() % commSize;
 
+    MPI_Bcast(&NtotPerProc, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&NtotPerZeroProc, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    int numOfPtclsToCalculate  = (rank == 0) ? NtotPerZeroProc : NtotPerProc;
 
-    if (rank == 0)
+    int counts[commSize], displs[commSize], countsMatrix[commSize], displsMatrix[commSize];
+    counts[0] = NtotPerZeroProc;
+    displs[0] = 0;
+    countsMatrix[0] = Nx * Ny;
+    displsMatrix[0] = 0;
+    for (int i = 1; i < commSize; ++i)
     {
-        int Ntot_ = particles.get_Ntot();
-        int NtotPerZeroProc = Ntot_ / commSize + Ntot_ % commSize;
-        int NtotPerProc = Ntot_ / commSize;
-
-        MPI_Datatype ParticlesDataType;
-        int blockLength[numOfPhysValues];
-        int displacements[numOfPhysValues];
-        for (int i = 0; i < numOfPhysValues; ++i)
-        {
-            if (i == 0 || i == 1)
-            {
-                blockLength[i] = Nx * Ny;
-                displacements[i] = i * Nx * Ny;
-            }
-            else
-            {
-                blockLength[i] = NtotPerProc;
-                displacements[i] = (i - 2) * NtotPerProc + 2 * Nx * Ny;
-            }
-        }
-        MPI_Type_indexed(numOfPhysValues, blockLength, displacements, MPI_DOUBLE, &ParticlesDataType);
-        MPI_Type_commit(&ParticlesDataType);
-
-        vector<scalar> particlesData;
-        int start = 0;
-        for (int proc = 1; proc < commSize; ++proc)
-        {
-            MPI_Send(&NtotPerProc, 1, MPI_INT, proc, 5775, MPI_COMM_WORLD);
-
-            start = NtotPerZeroProc + (proc - 1) * NtotPerProc;
-            particlesData.insert(particlesData.end(), Ex.data.begin(), Ex.data.end());
-            particlesData.insert(particlesData.end(), Ey.data.begin(), Ey.data.end());
-            particlesData.insert(particlesData.end(), particles.Ex.begin() + start, particles.Ex.begin() + start + NtotPerProc);
-            particlesData.insert(particlesData.end(), particles.Ey.begin() + start, particles.Ey.begin() + start + NtotPerProc);
-            particlesData.insert(particlesData.end(), particles.x.begin() + start, particles.x.begin() + start + NtotPerProc);
-            particlesData.insert(particlesData.end(), particles.y.begin() + start, particles.y.begin() + start + NtotPerProc);
-
-            MPI_Send(&particlesData[0], 1, ParticlesDataType, proc, 6776, MPI_COMM_WORLD);
-
-            particlesData.resize(0);
-        }
-        
-        __LinearFieldInterpolation(particles.Ex.data(), particles.Ey.data(), particles.x.data(), particles.y.data(), Ex.data_const_ptr(), Ey.data_const_ptr(), grid, NtotPerZeroProc);
-
-        int numOfRecvData = 2;
-        particlesData.resize(NtotPerProc * numOfRecvData);
-        for (int proc = 1; proc < commSize; ++proc)
-        {
-            MPI_Recv(&particlesData[0], NtotPerProc * numOfRecvData, MPI_DOUBLE, proc, 4 * 99, MPI_COMM_WORLD, &status);
-            //MPI_Recv(&efyRecv[0], NtotPerProc, MPI_DOUBLE, proc, 5 * 99, MPI_COMM_WORLD, &status);
-
-            int start = NtotPerZeroProc + (proc - 1) * NtotPerProc;
-            int finish = NtotPerZeroProc + proc * NtotPerProc;
-            #pragma omp parallel for num_threads(NUM_THREADS)
-            for (int ip = start; ip < finish; ++ip)
-            {
-                particles.Ex[ip] = particlesData[0 * NtotPerProc + ip - start];
-                particles.Ey[ip] = particlesData[1 * NtotPerProc + ip - start];
-            }
-        }
+        counts[i] = NtotPerProc;
+        displs[i] = NtotPerZeroProc + (i - 1) * NtotPerProc;
+        countsMatrix[i] = Nx * Ny;
+        displsMatrix[i] = 0;
     }
 
-    else
-    {
-        int NtotPerProc = 0;
-        MPI_Recv(&NtotPerProc, 1, MPI_INT, 0, 5775, MPI_COMM_WORLD, &status);
+    vector<scalar> x;
+    vector<scalar> y;
+    Matrix _Ex(Nx, Ny);
+    Matrix _Ey(Nx, Ny);
+    vector<scalar> efx;
+    vector<scalar> efy;
+    x.resize(numOfPtclsToCalculate);
+    y.resize(numOfPtclsToCalculate);
+    efx.resize(numOfPtclsToCalculate);
+    efy.resize(numOfPtclsToCalculate);
 
-        int sizeOfProcData = (numOfPhysValues - 2) * NtotPerProc + 2 * Nx * Ny;
+    MPI_Scatterv(&particles.x[0], counts, displs, MPI_DOUBLE, &x[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&particles.y[0], counts, displs, MPI_DOUBLE, &y[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&Ex.data[0], countsMatrix, displsMatrix, MPI_DOUBLE, &_Ex.data[0], Nx * Ny, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&Ey.data[0], countsMatrix, displsMatrix, MPI_DOUBLE, &_Ey.data[0], Nx * Ny, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&particles.Ex[0], counts, displs, MPI_DOUBLE, &efx[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&particles.Ey[0], counts, displs, MPI_DOUBLE, &efy[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-        vector<scalar> particlesData;
-        particlesData.resize(sizeOfProcData);
-        MPI_Recv(&particlesData[0], sizeOfProcData, MPI_DOUBLE, 0, 6776, MPI_COMM_WORLD, &status);
+    __LinearFieldInterpolation(efx.data(), efy.data(), x.data(), y.data(), _Ex.data_const_ptr(), _Ey.data_const_ptr(), grid, numOfPtclsToCalculate);
 
-        vector<scalar> xProc;
-        vector<scalar> yProc;
-        vector<scalar> efxProc;
-        vector<scalar> efyProc;
-        
-        Ex.data.resize(0);
-        Ey.data.resize(0);
-        Ex.data.insert(Ex.data.end(), particlesData.begin(), particlesData.begin() + Nx * Ny);
-        Ey.data.insert(Ey.data.end(), particlesData.begin() + Nx * Ny, particlesData.begin() + 2 * Nx * Ny);
-        efxProc.insert(efxProc.end(), particlesData.begin() + 2 * Nx * Ny, particlesData.begin() + 2 * Nx * Ny + NtotPerProc);
-        efyProc.insert(efyProc.end(), particlesData.begin() + 2 * Nx * Ny + NtotPerProc, particlesData.begin() + 2 * Nx * Ny + 2 * NtotPerProc);
-        xProc.insert(xProc.end(), particlesData.begin() + 2 * Nx * Ny + 2 * NtotPerProc, particlesData.begin() + 2 * Nx * Ny + 3 * NtotPerProc);
-        yProc.insert(yProc.end(), particlesData.begin() + 2 * Nx * Ny + 3 * NtotPerProc, particlesData.begin() + 2 * Nx * Ny + 4 * NtotPerProc);
-
-        __LinearFieldInterpolation(efxProc.data(), efyProc.data(), xProc.data(), yProc.data(), Ex.data_const_ptr(), Ey.data_const_ptr(), grid, NtotPerProc);
-
-        particlesData.resize(0);
-        int numOfSendingData = 2;
-        particlesData.insert(particlesData.end(), efxProc.begin(), efxProc.end());
-        particlesData.insert(particlesData.end(), efyProc.begin(), efyProc.end());
-        MPI_Send(&particlesData[0], NtotPerProc * numOfSendingData, MPI_DOUBLE, 0, 4 * 99, MPI_COMM_WORLD);
-        //MPI_Send(&efyProc[0], NtotPerProc, MPI_DOUBLE, 0, 5 * 99, MPI_COMM_WORLD);
-    }
+    MPI_Gatherv(&efx[0], numOfPtclsToCalculate, MPI_DOUBLE, &particles.Ex[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(&efy[0], numOfPtclsToCalculate, MPI_DOUBLE, &particles.Ey[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
