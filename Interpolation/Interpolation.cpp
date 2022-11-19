@@ -94,10 +94,10 @@ void __LinearChargeInterpolation(scalar *rho, const scalar *x, const scalar *y, 
     }
 }
 
-void LinearFieldInterpolation(Particles &ptcl, const Matrix &Ex_grid, const Matrix &Ey_grid, const Grid &grid) {
+/*void LinearFieldInterpolation(Particles &ptcl, const Matrix &Ex_grid, const Matrix &Ey_grid, const Grid &grid) {
     __LinearFieldInterpolation(ptcl.Ex.data(), ptcl.Ey.data(), ptcl.x.data(), ptcl.y.data(), Ex_grid.data_const_ptr(),
                                Ey_grid.data_const_ptr(), grid, ptcl.get_Ntot());
-}
+}*/
 
 void LinearChargeInterpolation(Matrix &rho, const Particles &ptcl, const Grid &grid) {
     __LinearChargeInterpolation(rho.data_ptr(), ptcl.x.data(), ptcl.y.data(), grid,
@@ -145,7 +145,7 @@ void LinearChargeInterpolationMPI(Matrix& rhoMatrix, const Particles& particles,
     
 }
 
-void LinearFieldInterpolationMPI(Particles &particles, Matrix &Ex, Matrix &Ey, const Grid& grid)
+void LinearFieldInterpolationMPI(Particles &particles, Matrix &Ex, Matrix &Ey, const Grid& grid, int iteration)
 {
     int rank, commSize;
     MPI_Status status;
@@ -174,26 +174,25 @@ void LinearFieldInterpolationMPI(Particles &particles, Matrix &Ex, Matrix &Ey, c
         displsMatrix[i] = 0;
     }
 
-    vector<scalar> x;
-    vector<scalar> y;
-    Matrix _Ex(Nx, Ny);
-    Matrix _Ey(Nx, Ny);
-    vector<scalar> efx;
-    vector<scalar> efy;
-    x.resize(numOfPtclsToCalculate);
-    y.resize(numOfPtclsToCalculate);
-    efx.resize(numOfPtclsToCalculate);
-    efy.resize(numOfPtclsToCalculate);
+    particles.Resize(numOfPtclsToCalculate);
+    Matrix Ex_(Nx, Ny);
+    Matrix Ey_(Nx, Ny);
 
-    MPI_Scatterv(&particles.x[0], counts, displs, MPI_DOUBLE, &x[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&particles.y[0], counts, displs, MPI_DOUBLE, &y[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&Ex.data[0], countsMatrix, displsMatrix, MPI_DOUBLE, &_Ex.data[0], Nx * Ny, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&Ey.data[0], countsMatrix, displsMatrix, MPI_DOUBLE, &_Ey.data[0], Nx * Ny, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&particles.Ex[0], counts, displs, MPI_DOUBLE, &efx[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&particles.Ey[0], counts, displs, MPI_DOUBLE, &efy[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&particles.x[0], counts, displs, MPI_DOUBLE, particles.x_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&particles.y[0], counts, displs, MPI_DOUBLE, particles.y_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&Ex.data[0], countsMatrix, displsMatrix, MPI_DOUBLE, &Ex_.data[0], Nx * Ny, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&Ey.data[0], countsMatrix, displsMatrix, MPI_DOUBLE, &Ey_.data[0], Nx * Ny, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&particles.Ex[0], counts, displs, MPI_DOUBLE, particles.Ex_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&particles.Ey[0], counts, displs, MPI_DOUBLE, particles.Ey_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-    __LinearFieldInterpolation(efx.data(), efy.data(), x.data(), y.data(), _Ex.data_const_ptr(), _Ey.data_const_ptr(), grid, numOfPtclsToCalculate);
+    __LinearFieldInterpolation(particles.Ex_.data(), particles.Ey_.data(), particles.x_.data(), particles.y_.data(), Ex_.data_const_ptr(), Ey_.data_const_ptr(), grid, numOfPtclsToCalculate);
+    
+    MPI_Gatherv(particles.Ex_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &particles.Ex[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(particles.Ey_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &particles.Ey[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-    MPI_Gatherv(&efx[0], numOfPtclsToCalculate, MPI_DOUBLE, &particles.Ex[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(&efy[0], numOfPtclsToCalculate, MPI_DOUBLE, &particles.Ey[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    if (iteration % 100 == 0)
+    {
+        particles.Resize(0);
+        particles.ShrinkToFit();
+    }
 }

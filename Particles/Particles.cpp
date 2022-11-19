@@ -59,7 +59,7 @@ void Particles::pusher(const scalar dt) {
     ParticlePush(x.data(), y.data(), vx.data(), vy.data(), vz.data(), Ex.data(), Ey.data(), Bx.data(), By.data(), Bz.data(), dt, charge, mass, Ntot);
 }
 
-void Particles::pusherMPI(scalar dt)
+void Particles::pusherMPI(scalar dt, int iteration)
 {
     int rank, commSize;
     MPI_Status status;
@@ -83,46 +83,65 @@ void Particles::pusherMPI(scalar dt)
         displs[i] = Ntot_per_0_proc + (i - 1) * Ntot_per_proc;
     }
 
-    vector<scalar> xProc;
-    vector<scalar> yProc;
-    vector<scalar> vxProc;
-    vector<scalar> vyProc;
-    vector<scalar> vzProc;
-    vector<scalar> BxProc;
-    vector<scalar> ByProc;
-    vector<scalar> BzProc;
-    vector<scalar> ExProc;
-    vector<scalar> EyProc;
-    xProc.resize(numOfPtclsToCalculate);
-    yProc.resize(numOfPtclsToCalculate);
-    vxProc.resize(numOfPtclsToCalculate);
-    vyProc.resize(numOfPtclsToCalculate);
-    vzProc.resize(numOfPtclsToCalculate);
-    BxProc.resize(numOfPtclsToCalculate);
-    ByProc.resize(numOfPtclsToCalculate);
-    BzProc.resize(numOfPtclsToCalculate);
-    ExProc.resize(numOfPtclsToCalculate);
-    EyProc.resize(numOfPtclsToCalculate);
+    /*scalar *xProc = new scalar[numOfPtclsToCalculate];
+    scalar *yProc = new scalar[numOfPtclsToCalculate];
+    scalar *vxProc = new scalar[numOfPtclsToCalculate];
+    scalar *vyProc = new scalar[numOfPtclsToCalculate];
+    scalar *vzProc = new scalar[numOfPtclsToCalculate];
+    scalar *vx_cProc = new scalar[numOfPtclsToCalculate];
+    scalar *vy_cProc = new scalar[numOfPtclsToCalculate];
+    scalar *vz_cProc = new scalar[numOfPtclsToCalculate];
+    scalar *BxProc = new scalar[numOfPtclsToCalculate];
+    scalar *ByProc = new scalar[numOfPtclsToCalculate];
+    scalar *BzProc = new scalar[numOfPtclsToCalculate];
+    scalar *ExProc = new scalar[numOfPtclsToCalculate];
+    scalar *EyProc = new scalar[numOfPtclsToCalculate];*/
 
-    MPI_Scatterv(&x[0], counts, displs, MPI_DOUBLE, &xProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&y[0], counts, displs, MPI_DOUBLE, &yProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&vx[0], counts, displs, MPI_DOUBLE, &vxProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&vy[0], counts, displs, MPI_DOUBLE, &vyProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&vz[0], counts, displs, MPI_DOUBLE, &vzProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&Bx[0], counts, displs, MPI_DOUBLE, &BxProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&By[0], counts, displs, MPI_DOUBLE, &ByProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&Bz[0], counts, displs, MPI_DOUBLE, &BzProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&Ex[0], counts, displs, MPI_DOUBLE, &ExProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&Ey[0], counts, displs, MPI_DOUBLE, &EyProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    Resize(numOfPtclsToCalculate);
 
-    ParticlePush(xProc.data(), yProc.data(), vxProc.data(), vyProc.data(), vzProc.data(),
-                                    ExProc.data(), EyProc.data(), BxProc.data(), ByProc.data(), BzProc.data(), dt, charge, mass, numOfPtclsToCalculate);
+    /*for (int i = 0; i < numOfPtclsToCalculate; ++i)
+    {
+        BxProc[i] = Bx_const;
+        ByProc[i] = By_const;
+        BzProc[i] = Bz_const;
+    }*/
 
-    MPI_Gatherv(&xProc[0], numOfPtclsToCalculate, MPI_DOUBLE, &x[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(&yProc[0], numOfPtclsToCalculate, MPI_DOUBLE, &y[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(&vxProc[0], numOfPtclsToCalculate, MPI_DOUBLE, &vx[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(&vyProc[0], numOfPtclsToCalculate, MPI_DOUBLE, &vy[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(&vzProc[0], numOfPtclsToCalculate, MPI_DOUBLE, &vz[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&x[0], counts, displs, MPI_DOUBLE, x_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&y[0], counts, displs, MPI_DOUBLE, y_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&vx[0], counts, displs, MPI_DOUBLE, vx_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&vy[0], counts, displs, MPI_DOUBLE, vy_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&vz[0], counts, displs, MPI_DOUBLE, vz_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&Ex[0], counts, displs, MPI_DOUBLE, Ex_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&Ey[0], counts, displs, MPI_DOUBLE, Ey_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    ParticlePush(x_.data(), y_.data(), vx_.data(), vy_.data(), vz_.data(),
+                    Ex_.data(), Ey_.data(), Bx_.data(), By_.data(), Bz_.data(), dt, charge, mass, numOfPtclsToCalculate);
+
+    MPI_Gatherv(x_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &x[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(y_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &y[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(vx_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &vx[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(vy_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &vy[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(vz_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &vz[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    if (iteration % 100 == 0)
+    {
+        Resize(0);
+        ShrinkToFit();
+    }
+
+    /*delete[] xProc;
+    delete[] yProc;
+    delete[] vxProc;
+    delete[] vyProc;
+    delete[] vzProc;
+    delete[] vx_cProc;
+    delete[] vy_cProc;
+    delete[] vz_cProc;
+    delete[] BxProc;
+    delete[] ByProc;
+    delete[] BzProc;
+    delete[] ExProc;
+    delete[] EyProc;*/
 }
 
 Particles::Particles(scalar m, scalar q, int N, scalar N_per_macro) {
@@ -147,6 +166,16 @@ Particles::Particles(scalar m, scalar q, int N, scalar N_per_macro) {
     Bx.resize(Ntot, 0);
     By.resize(Ntot, 0);
     Bz.resize(Ntot, 0);
+    x_.resize(Ntot, 0);
+    y_.resize(Ntot, 0);
+    vx_.resize(Ntot, 0);
+    vy_.resize(Ntot, 0);
+    vz_.resize(Ntot, 0);
+    Ex_.resize(Ntot, 0);
+    Ey_.resize(Ntot, 0);
+    Bx_.resize(Ntot, 0);
+    By_.resize(Ntot, 0);
+    Bz_.resize(Ntot, 0);
 }
 
 Particles::Particles(scalar m, scalar q, int N, string type, scalar N_per_macro) {
@@ -172,6 +201,16 @@ Particles::Particles(scalar m, scalar q, int N, string type, scalar N_per_macro)
     Bx.resize(Ntot, 0);
     By.resize(Ntot, 0);
     Bz.resize(Ntot, 0);
+    x_.resize(Ntot, 0);
+    y_.resize(Ntot, 0);
+    vx_.resize(Ntot, 0);
+    vy_.resize(Ntot, 0);
+    vz_.resize(Ntot, 0);
+    Ex_.resize(Ntot, 0);
+    Ey_.resize(Ntot, 0);
+    Bx_.resize(Ntot, 0);
+    By_.resize(Ntot, 0);
+    Bz_.resize(Ntot, 0);
 }
 
 scalar Particles::get_ptcls_per_macro() const {
@@ -438,7 +477,7 @@ array<array<scalar, NX>, NX> Particles::GetJ(){
     return J;
 }
 
-void Particles::Resize(int _size)
+/*void Particles::Resize(int _size)
     {
         x.resize(_size);
         y.resize(_size);
@@ -451,7 +490,7 @@ void Particles::Resize(int _size)
         Ex.resize(_size);
         Ey.resize(_size);
         Ntot = _size;
-    }
+    }*/
 
 array<vector<scalar>, 2> Particles::GetPositions()
 {
@@ -546,5 +585,32 @@ void Particles::InitConfigurationFromFile()
     }
 }
 
+void Particles::Resize(int newSize)
+{
+    x_.resize(newSize);
+    y_.resize(newSize);
+    vx_.resize(newSize);
+    vy_.resize(newSize);
+    vz_.resize(newSize);
+    Bx_.resize(newSize, Bx_const);
+    By_.resize(newSize, By_const);
+    Bz_.resize(newSize, Bz_const);
+    Ex_.resize(newSize);
+    Ey_.resize(newSize);
+}
+
+void Particles::ShrinkToFit()
+{
+    x_.shrink_to_fit();
+    y_.shrink_to_fit();
+    vx_.shrink_to_fit();
+    vy_.shrink_to_fit();
+    vz_.shrink_to_fit();
+    Bx_.shrink_to_fit();
+    By_.shrink_to_fit();
+    Bz_.shrink_to_fit();
+    Ex_.shrink_to_fit();
+    Ey_.shrink_to_fit();
+}
 
 

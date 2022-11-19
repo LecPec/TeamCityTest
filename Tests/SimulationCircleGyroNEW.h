@@ -335,7 +335,7 @@ void test_simulation_circle_gyro_new() {
     ions.ZeroAnodeCurrent();
 
     int NtotElectrons = electrons.get_Ntot(), NtotIons = ions.get_Ntot();
-    int logStep = 1000;
+    int logStep = 10000;
 
     double t0Field = 0, tField = 0;
     double t0Charge = 0, tCharge = 0;
@@ -436,12 +436,12 @@ void test_simulation_circle_gyro_new() {
         /// </summary>
 
         t0Field += omp_get_wtime();
-        LinearFieldInterpolationMPI(electrons, Ex, Ey, grid);
+        LinearFieldInterpolationMPI(electrons, Ex, Ey, grid, it);
         tField += omp_get_wtime();
 
         if (it % ion_step == 0)
         {
-            LinearFieldInterpolationMPI(ions, Ex, Ey, grid);
+            LinearFieldInterpolationMPI(ions, Ex, Ey, grid, it);
         }
 
         /// <summary>
@@ -454,12 +454,12 @@ void test_simulation_circle_gyro_new() {
         /// </summary>
 
         t0Push += omp_get_wtime();
-        electrons.GyroPusherMPI(dt);
+        electrons.GyroPusherMPI(dt, it);
         tPush += omp_get_wtime();
 
         if (it % ion_step == 0) 
         {
-            ions.pusherMPI(ion_step * dt);
+            ions.pusherMPI(ion_step * dt, it);
         }
 
         /// <summary>

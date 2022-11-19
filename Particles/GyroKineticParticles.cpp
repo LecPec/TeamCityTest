@@ -35,6 +35,9 @@ GyroKineticParticles::GyroKineticParticles(scalar m, scalar q, int N, string typ
     vx_c.resize(Ntot);
     vy_c.resize(Ntot);
     vz_c.resize(Ntot);
+    vx_c_.resize(Ntot);
+    vy_c_.resize(Ntot);
+    vz_c_.resize(Ntot);
 }
 
 void GyroKineticParticles::append(const array<scalar, 2> &position, const array<scalar, 3> &velocity) {
@@ -94,7 +97,7 @@ void GyroKineticParticles::pop_list(const vector<int> &ptcl_idx_list) {
     Ntot = x.size();
 }
 
-void GyroKineticParticles::GyroPusherMPI(scalar dt)
+void GyroKineticParticles::GyroPusherMPI(scalar dt, int iteration)
 {
     int rank, commSize;
     MPI_Status status;
@@ -118,58 +121,71 @@ void GyroKineticParticles::GyroPusherMPI(scalar dt)
         displs[i] = Ntot_per_0_proc + (i - 1) * Ntot_per_proc;
     }
 
-    vector<scalar> xProc;
-    vector<scalar> yProc;
-    vector<scalar> vxProc;
-    vector<scalar> vyProc;
-    vector<scalar> vzProc;
-    vector<scalar> vx_cProc;
-    vector<scalar> vy_cProc;
-    vector<scalar> vz_cProc;
-    vector<scalar> BxProc;
-    vector<scalar> ByProc;
-    vector<scalar> BzProc;
-    vector<scalar> ExProc;
-    vector<scalar> EyProc;
-    xProc.resize(numOfPtclsToCalculate);
-    yProc.resize(numOfPtclsToCalculate);
-    vxProc.resize(numOfPtclsToCalculate);
-    vyProc.resize(numOfPtclsToCalculate);
-    vzProc.resize(numOfPtclsToCalculate);
-    vx_cProc.resize(numOfPtclsToCalculate);
-    vy_cProc.resize(numOfPtclsToCalculate);
-    vz_cProc.resize(numOfPtclsToCalculate);
-    BxProc.resize(numOfPtclsToCalculate);
-    ByProc.resize(numOfPtclsToCalculate);
-    BzProc.resize(numOfPtclsToCalculate);
-    ExProc.resize(numOfPtclsToCalculate);
-    EyProc.resize(numOfPtclsToCalculate);
+    /*scalar *xProc = new scalar[numOfPtclsToCalculate];
+    scalar *yProc = new scalar[numOfPtclsToCalculate];
+    scalar *vxProc = new scalar[numOfPtclsToCalculate];
+    scalar *vyProc = new scalar[numOfPtclsToCalculate];
+    scalar *vzProc = new scalar[numOfPtclsToCalculate];
+    scalar *vx_cProc = new scalar[numOfPtclsToCalculate];
+    scalar *vy_cProc = new scalar[numOfPtclsToCalculate];
+    scalar *vz_cProc = new scalar[numOfPtclsToCalculate];
+    scalar *BxProc = new scalar[numOfPtclsToCalculate];
+    scalar *ByProc = new scalar[numOfPtclsToCalculate];
+    scalar *BzProc = new scalar[numOfPtclsToCalculate];
+    scalar *ExProc = new scalar[numOfPtclsToCalculate];
+    scalar *EyProc = new scalar[numOfPtclsToCalculate];*/
 
-    MPI_Scatterv(&x[0], counts, displs, MPI_DOUBLE, &xProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&y[0], counts, displs, MPI_DOUBLE, &yProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&vx[0], counts, displs, MPI_DOUBLE, &vxProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&vy[0], counts, displs, MPI_DOUBLE, &vyProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&vz[0], counts, displs, MPI_DOUBLE, &vzProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&vx_c[0], counts, displs, MPI_DOUBLE, &vx_cProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&vy_c[0], counts, displs, MPI_DOUBLE, &vy_cProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&vz_c[0], counts, displs, MPI_DOUBLE, &vz_cProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&Bx[0], counts, displs, MPI_DOUBLE, &BxProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&By[0], counts, displs, MPI_DOUBLE, &ByProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&Bz[0], counts, displs, MPI_DOUBLE, &BzProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&Ex[0], counts, displs, MPI_DOUBLE, &ExProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&Ey[0], counts, displs, MPI_DOUBLE, &EyProc[0], numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    Resize(numOfPtclsToCalculate);
 
-    GyroParticlePush(xProc.data(), yProc.data(), vx_cProc.data(), vy_cProc.data(), vz_cProc.data(), vxProc.data(), vyProc.data(), vzProc.data(),
-                                    ExProc.data(), EyProc.data(), BxProc.data(), ByProc.data(), BzProc.data(), dt, charge, mass, numOfPtclsToCalculate);
+    /*for (int i = 0; i < numOfPtclsToCalculate; ++i)
+    {
+        BxProc[i] = Bx_const;
+        ByProc[i] = By_const;
+        BzProc[i] = Bz_const;
+    }*/
 
-    MPI_Gatherv(&xProc[0], numOfPtclsToCalculate, MPI_DOUBLE, &x[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(&yProc[0], numOfPtclsToCalculate, MPI_DOUBLE, &y[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(&vxProc[0], numOfPtclsToCalculate, MPI_DOUBLE, &vx[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(&vyProc[0], numOfPtclsToCalculate, MPI_DOUBLE, &vy[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(&vzProc[0], numOfPtclsToCalculate, MPI_DOUBLE, &vz[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(&vx_cProc[0], numOfPtclsToCalculate, MPI_DOUBLE, &vx_c[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(&vy_cProc[0], numOfPtclsToCalculate, MPI_DOUBLE, &vy_c[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(&vz_cProc[0], numOfPtclsToCalculate, MPI_DOUBLE, &vz_c[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&x[0], counts, displs, MPI_DOUBLE, x_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&y[0], counts, displs, MPI_DOUBLE, y_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&vx[0], counts, displs, MPI_DOUBLE, vx_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&vy[0], counts, displs, MPI_DOUBLE, vy_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&vz[0], counts, displs, MPI_DOUBLE, vz_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&vx_c[0], counts, displs, MPI_DOUBLE, vx_c_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&vy_c[0], counts, displs, MPI_DOUBLE, vy_c_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&vz_c[0], counts, displs, MPI_DOUBLE, vz_c_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&Ex[0], counts, displs, MPI_DOUBLE, Ex_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&Ey[0], counts, displs, MPI_DOUBLE, Ey_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    GyroParticlePush(x_.data(), y_.data(), vx_c_.data(), vy_c_.data(), vz_c_.data(), vx_.data(), vy_.data(), vz_.data(),
+                    Ex_.data(), Ey_.data(), Bx_.data(), By_.data(), Bz_.data(), dt, charge, mass, numOfPtclsToCalculate);
+
+    MPI_Gatherv(x_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &x[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(y_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &y[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(vx_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &vx[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(vy_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &vy[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(vz_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &vz[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(vx_c_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &vx_c[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(vy_c_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &vy_c[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(vz_c_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &vz_c[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    if (iteration % 100 == 0)
+    {
+        Resize(0);
+        ShrinkToFit();
+    }
+
+    /*delete[] xProc;
+    delete[] yProc;
+    delete[] vxProc;
+    delete[] vyProc;
+    delete[] vzProc;
+    delete[] vx_cProc;
+    delete[] vy_cProc;
+    delete[] vz_cProc;
+    delete[] BxProc;
+    delete[] ByProc;
+    delete[] BzProc;
+    delete[] ExProc;
+    delete[] EyProc;*/
 }
 
 //Particles configuration log
@@ -260,4 +276,20 @@ void GyroKineticParticles::InitConfigurationFromFile()
 
         numOfParticle++;
     }
+}
+
+void GyroKineticParticles::Resize(int newSize)
+{
+    Particles::Resize(newSize);
+    vx_c_.resize(newSize);
+    vy_c_.resize(newSize);
+    vz_c_.resize(newSize);
+}
+
+void GyroKineticParticles::ShrinkToFit()
+{
+    Particles::ShrinkToFit();
+    vx_c_.shrink_to_fit();
+    vy_c_.shrink_to_fit();
+    vz_c_.shrink_to_fit();
 }

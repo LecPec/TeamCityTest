@@ -34,6 +34,16 @@ public:
     vector<scalar> Bz;
     vector<scalar> Ex;
     vector<scalar> Ey;
+    vector<scalar> vx_;
+    vector<scalar> vy_;
+    vector<scalar> vz_;
+    vector<scalar> x_;
+    vector<scalar> y_;
+    vector<scalar> Bx_;
+    vector<scalar> By_;
+    vector<scalar> Bz_;
+    vector<scalar> Ex_;
+    vector<scalar> Ey_;
     Particles(scalar m, scalar q, int N, scalar N_per_macro = 1);
     Particles(scalar m, scalar q, int N, string type, scalar N_per_macro = 1);
 
@@ -45,9 +55,9 @@ public:
 
     virtual void vel_pusher(scalar  dt);
     virtual void pusher(scalar  dt);
-    virtual void pusherMPI(scalar dt);
+    virtual void pusherMPI(scalar dt, int iteration);
 
-    void Resize(int _size);
+    //void Resize(int _size);
 
     //setters & getters
     void set_const_magnetic_field(const array<scalar, 3>& B);
@@ -94,6 +104,9 @@ public:
     //Particles configuration log
     virtual void GetParticlesConfiguration();
     virtual void InitConfigurationFromFile();
+
+    virtual void Resize(int newSize);
+    virtual void ShrinkToFit();
 };
 
 
