@@ -1,0 +1,4 @@
+task: pic_2d_openmp
+time: 20
+hosts:
+n02p038:32

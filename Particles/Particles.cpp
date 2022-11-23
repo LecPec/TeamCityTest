@@ -106,22 +106,22 @@ void Particles::pusherMPI(scalar dt, int iteration)
         BzProc[i] = Bz_const;
     }*/
 
-    MPI_Scatterv(&x[0], counts, displs, MPI_DOUBLE, x_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&y[0], counts, displs, MPI_DOUBLE, y_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&vx[0], counts, displs, MPI_DOUBLE, vx_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&vy[0], counts, displs, MPI_DOUBLE, vy_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&vz[0], counts, displs, MPI_DOUBLE, vz_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&Ex[0], counts, displs, MPI_DOUBLE, Ex_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&Ey[0], counts, displs, MPI_DOUBLE, Ey_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&x[0], counts, displs, MPI_DOUBLE, x_->data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&y[0], counts, displs, MPI_DOUBLE, y_->data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&vx[0], counts, displs, MPI_DOUBLE, vx_->data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&vy[0], counts, displs, MPI_DOUBLE, vy_->data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&vz[0], counts, displs, MPI_DOUBLE, vz_->data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&Ex[0], counts, displs, MPI_DOUBLE, Ex_->data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&Ey[0], counts, displs, MPI_DOUBLE, Ey_->data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-    ParticlePush(x_.data(), y_.data(), vx_.data(), vy_.data(), vz_.data(),
-                    Ex_.data(), Ey_.data(), Bx_.data(), By_.data(), Bz_.data(), dt, charge, mass, numOfPtclsToCalculate);
+    ParticlePush(x_->data(), y_->data(), vx_->data(), vy_->data(), vz_->data(),
+                    Ex_->data(), Ey_->data(), Bx_->data(), By_->data(), Bz_->data(), dt, charge, mass, numOfPtclsToCalculate);
 
-    MPI_Gatherv(x_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &x[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(y_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &y[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(vx_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &vx[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(vy_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &vy[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(vz_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &vz[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(x_->data(), numOfPtclsToCalculate, MPI_DOUBLE, &x[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(y_->data(), numOfPtclsToCalculate, MPI_DOUBLE, &y[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(vx_->data(), numOfPtclsToCalculate, MPI_DOUBLE, &vx[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(vy_->data(), numOfPtclsToCalculate, MPI_DOUBLE, &vy[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(vz_->data(), numOfPtclsToCalculate, MPI_DOUBLE, &vz[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     if (iteration % 100 == 0)
     {
@@ -166,16 +166,16 @@ Particles::Particles(scalar m, scalar q, int N, scalar N_per_macro) {
     Bx.resize(Ntot, 0);
     By.resize(Ntot, 0);
     Bz.resize(Ntot, 0);
-    x_.resize(Ntot, 0);
-    y_.resize(Ntot, 0);
-    vx_.resize(Ntot, 0);
-    vy_.resize(Ntot, 0);
-    vz_.resize(Ntot, 0);
-    Ex_.resize(Ntot, 0);
-    Ey_.resize(Ntot, 0);
-    Bx_.resize(Ntot, 0);
-    By_.resize(Ntot, 0);
-    Bz_.resize(Ntot, 0);
+    x_->resize(Ntot, 0);
+    y_->resize(Ntot, 0);
+    vx_->resize(Ntot, 0);
+    vy_->resize(Ntot, 0);
+    vz_->resize(Ntot, 0);
+    Ex_->resize(Ntot, 0);
+    Ey_->resize(Ntot, 0);
+    Bx_->resize(Ntot, 0);
+    By_->resize(Ntot, 0);
+    Bz_->resize(Ntot, 0);
 }
 
 Particles::Particles(scalar m, scalar q, int N, string type, scalar N_per_macro) {
@@ -201,16 +201,16 @@ Particles::Particles(scalar m, scalar q, int N, string type, scalar N_per_macro)
     Bx.resize(Ntot, 0);
     By.resize(Ntot, 0);
     Bz.resize(Ntot, 0);
-    x_.resize(Ntot, 0);
-    y_.resize(Ntot, 0);
-    vx_.resize(Ntot, 0);
-    vy_.resize(Ntot, 0);
-    vz_.resize(Ntot, 0);
-    Ex_.resize(Ntot, 0);
-    Ey_.resize(Ntot, 0);
-    Bx_.resize(Ntot, 0);
-    By_.resize(Ntot, 0);
-    Bz_.resize(Ntot, 0);
+    x_->resize(Ntot, 0);
+    y_->resize(Ntot, 0);
+    vx_->resize(Ntot, 0);
+    vy_->resize(Ntot, 0);
+    vz_->resize(Ntot, 0);
+    Ex_->resize(Ntot, 0);
+    Ey_->resize(Ntot, 0);
+    Bx_->resize(Ntot, 0);
+    By_->resize(Ntot, 0);
+    Bz_->resize(Ntot, 0);
 }
 
 scalar Particles::get_ptcls_per_macro() const {
@@ -587,30 +587,30 @@ void Particles::InitConfigurationFromFile()
 
 void Particles::Resize(int newSize)
 {
-    x_.resize(newSize);
-    y_.resize(newSize);
-    vx_.resize(newSize);
-    vy_.resize(newSize);
-    vz_.resize(newSize);
-    Bx_.resize(newSize, Bx_const);
-    By_.resize(newSize, By_const);
-    Bz_.resize(newSize, Bz_const);
-    Ex_.resize(newSize);
-    Ey_.resize(newSize);
+    x_->resize(newSize);
+    y_->resize(newSize);
+    vx_->resize(newSize);
+    vy_->resize(newSize);
+    vz_->resize(newSize);
+    Bx_->resize(newSize, Bx_const);
+    By_->resize(newSize, By_const);
+    Bz_->resize(newSize, Bz_const);
+    Ex_->resize(newSize);
+    Ey_->resize(newSize);
 }
 
 void Particles::ShrinkToFit()
 {
-    x_.shrink_to_fit();
-    y_.shrink_to_fit();
-    vx_.shrink_to_fit();
-    vy_.shrink_to_fit();
-    vz_.shrink_to_fit();
-    Bx_.shrink_to_fit();
-    By_.shrink_to_fit();
-    Bz_.shrink_to_fit();
-    Ex_.shrink_to_fit();
-    Ey_.shrink_to_fit();
+    x_->shrink_to_fit();
+    y_->shrink_to_fit();
+    vx_->shrink_to_fit();
+    vy_->shrink_to_fit();
+    vz_->shrink_to_fit();
+    Bx_->shrink_to_fit();
+    By_->shrink_to_fit();
+    Bz_->shrink_to_fit();
+    Ex_->shrink_to_fit();
+    Ey_->shrink_to_fit();
 }
 
 

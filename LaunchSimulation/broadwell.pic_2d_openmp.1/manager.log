@@ -1,0 +1,270 @@
+
+***********
+Task started in 1 time of 1 at 11.11.22 13:01:59
+confread: missing section "Locals" in /usr/runmvs/broadwell/users/an090501/queue/broadwell.pic_2d_openmp.1
+******************* n02p087 **********************
+/common/runmvs/sbin/docker/cleanup_xp_com: line 1: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 7: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 12: docker: command not found
+................................
+
+Total Duration: 0.007s
+Count: 32, Failed: 0, Skipped: 0
+Host n02p087 has been prepared
+******************* n02p012 **********************
+/common/runmvs/sbin/docker/cleanup_xp_com: line 1: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 7: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 12: docker: command not found
+................................
+
+Total Duration: 0.007s
+Count: 32, Failed: 0, Skipped: 0
+Host n02p012 has been prepared
+******************* n02p011 **********************
+/common/runmvs/sbin/docker/cleanup_xp_com: line 1: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 7: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 12: docker: command not found
+................................
+
+Total Duration: 0.008s
+Count: 32, Failed: 0, Skipped: 0
+Host n02p011 has been prepared
+******************* n02p075 **********************
+/common/runmvs/sbin/docker/cleanup_xp_com: line 1: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 7: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 12: docker: command not found
+................................
+
+Total Duration: 0.007s
+Count: 32, Failed: 0, Skipped: 0
+Host n02p075 has been prepared
+******************* n02p018 **********************
+/common/runmvs/sbin/docker/cleanup_xp_com: line 1: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 7: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 12: docker: command not found
+................................
+
+Total Duration: 0.009s
+Count: 32, Failed: 0, Skipped: 0
+Host n02p018 has been prepared
+******************* n02p074 **********************
+/common/runmvs/sbin/docker/cleanup_xp_com: line 1: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 7: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 12: docker: command not found
+................................
+
+Total Duration: 0.008s
+Count: 32, Failed: 0, Skipped: 0
+Host n02p074 has been prepared
+******************* n02p048 **********************
+/common/runmvs/sbin/docker/cleanup_xp_com: line 1: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 7: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 12: docker: command not found
+................................
+
+Total Duration: 0.007s
+Count: 32, Failed: 0, Skipped: 0
+Host n02p048 has been prepared
+******************* n02p077 **********************
+/common/runmvs/sbin/docker/cleanup_xp_com: line 1: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 7: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 12: docker: command not found
+................................
+
+Total Duration: 0.007s
+Count: 32, Failed: 0, Skipped: 0
+Host n02p077 has been prepared
+******************* n02p013 **********************
+/common/runmvs/sbin/docker/cleanup_xp_com: line 1: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 7: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 12: docker: command not found
+................................
+
+Total Duration: 0.008s
+Count: 32, Failed: 0, Skipped: 0
+Host n02p013 has been prepared
+******************* n02p024 **********************
+/common/runmvs/sbin/docker/cleanup_xp_com: line 1: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 7: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 12: docker: command not found
+................................
+
+Total Duration: 0.008s
+Count: 32, Failed: 0, Skipped: 0
+Host n02p024 has been prepared
+******************* n02p007 **********************
+/common/runmvs/sbin/docker/cleanup_xp_com: line 1: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 7: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 12: docker: command not found
+................................
+
+Total Duration: 0.008s
+Count: 32, Failed: 0, Skipped: 0
+Host n02p007 has been prepared
+******************* n02p014 **********************
+/common/runmvs/sbin/docker/cleanup_xp_com: line 1: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 7: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 12: docker: command not found
+................................
+
+Total Duration: 0.009s
+Count: 32, Failed: 0, Skipped: 0
+Host n02p014 has been prepared
+******************* n02p022 **********************
+/common/runmvs/sbin/docker/cleanup_xp_com: line 1: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 7: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 12: docker: command not found
+................................
+
+Total Duration: 0.008s
+Count: 32, Failed: 0, Skipped: 0
+Host n02p022 has been prepared
+******************* n02p006 **********************
+/common/runmvs/sbin/docker/cleanup_xp_com: line 1: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 7: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 12: docker: command not found
+................................
+
+Total Duration: 0.008s
+Count: 32, Failed: 0, Skipped: 0
+Host n02p006 has been prepared
+******************* n02p009 **********************
+/common/runmvs/sbin/docker/cleanup_xp_com: line 1: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 7: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 12: docker: command not found
+................................
+
+Total Duration: 0.008s
+Count: 32, Failed: 0, Skipped: 0
+Host n02p009 has been prepared
+******************* n02p086 **********************
+/common/runmvs/sbin/docker/cleanup_xp_com: line 1: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 7: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 12: docker: command not found
+................................
+
+Total Duration: 0.008s
+Count: 32, Failed: 0, Skipped: 0
+Host n02p086 has been prepared
+******************* n02p078 **********************
+******************* n02p005 **********************
+/common/runmvs/sbin/docker/cleanup_xp_com: line 1: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 7: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 12: docker: command not found
+................................
+
+Total Duration: 0.008s
+Count: 32, Failed: 0, Skipped: 0
+/common/runmvs/sbin/docker/cleanup_xp_com: line 1: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 7: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 12: docker: command not found
+................................
+
+Total Duration: 0.008s
+Count: 32, Failed: 0, Skipped: 0
+Host n02p078 has been prepared
+Host n02p005 has been prepared
+******************* n02p050 **********************
+/common/runmvs/sbin/docker/cleanup_xp_com: line 1: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 7: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 12: docker: command not found
+................................
+
+Total Duration: 0.008s
+Count: 32, Failed: 0, Skipped: 0
+Host n02p050 has been prepared
+******************* n02p010 **********************
+/common/runmvs/sbin/docker/cleanup_xp_com: line 1: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 7: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 12: docker: command not found
+................................
+
+Total Duration: 0.008s
+Count: 32, Failed: 0, Skipped: 0
+Host n02p010 has been prepared
+error_flag=0
+Preparing nodes for user an090501
+/usr/runmvs/bin/prepare_nodes '/usr/runmvs/broadwell/users/an090501/queue/broadwell.pic_2d_openmp.1'
+Starting task process with pid 60431
+Pid of sleeper is 60432
+Sleeper 60432 started at 11.11.22 13:02:01 for 20 minutes, 0 seconds
+Signals set
+Sleeper 60432 got up at 11.11.22 13:22:01, testing end of task
+
+**** WARNING!!! The task has exhausted settled time!!! ****
+
+manager: sleeper 60432 was comleted with code 4
+Killing child tasks of pid 60431
+Executing /usr/runmvs/bin/stoptask.slurm /usr/runmvs/broadwell/users/an090501/queue/broadwell.pic_2d_openmp.1 /usr/runmvs/broadwell/users/an090501/run/broadwell.pic_2d_openmp.1 60431
+/usr/runmvs/bin/stoptask.slurm: Killing 206795 task by timeout...
+manager: process 60431 done at 11.11.22 13:22:08
+Creating done-file /usr/runmvs/broadwell/users/an090501/done/broadwell.pic_2d_openmp.1
+Done-file created successfully
+11.11.22 13:22:08: manager: closing nodes
+close_node: running "/usr/runmvs/bin/close_nodes /usr/runmvs/broadwell/users/an090501/queue/broadwell.pic_2d_openmp.1 no"
+Close nodes started
+Executing /usr/runmvs/bin/trycmd 3 /usr/runmvs/bin/cmd 900 /usr/bin/ssh on node n02p005
+Executing /usr/runmvs/bin/trycmd 3 /usr/runmvs/bin/cmd 900 /usr/bin/ssh on node n02p006
+Executing /usr/runmvs/bin/trycmd 3 /usr/runmvs/bin/cmd 900 /usr/bin/ssh on node n02p007
+Executing /usr/runmvs/bin/trycmd 3 /usr/runmvs/bin/cmd 900 /usr/bin/ssh on node n02p009
+Executing /usr/runmvs/bin/trycmd 3 /usr/runmvs/bin/cmd 900 /usr/bin/ssh on node n02p010
+Executing /usr/runmvs/bin/trycmd 3 /usr/runmvs/bin/cmd 900 /usr/bin/ssh on node n02p011
+Executing /usr/runmvs/bin/trycmd 3 /usr/runmvs/bin/cmd 900 /usr/bin/ssh on node n02p012
+Executing /usr/runmvs/bin/trycmd 3 /usr/runmvs/bin/cmd 900 /usr/bin/ssh on node n02p013
+Executing /usr/runmvs/bin/trycmd 3 /usr/runmvs/bin/cmd 900 /usr/bin/ssh on node n02p014
+Executing /usr/runmvs/bin/trycmd 3 /usr/runmvs/bin/cmd 900 /usr/bin/ssh on node n02p018
+Executing /usr/runmvs/bin/trycmd 3 /usr/runmvs/bin/cmd 900 /usr/bin/ssh on node n02p022
+Executing /usr/runmvs/bin/trycmd 3 /usr/runmvs/bin/cmd 900 /usr/bin/ssh on node n02p024
+Executing /usr/runmvs/bin/trycmd 3 /usr/runmvs/bin/cmd 900 /usr/bin/ssh on node n02p048
+Executing /usr/runmvs/bin/trycmd 3 /usr/runmvs/bin/cmd 900 /usr/bin/ssh on node n02p050
+Executing /usr/runmvs/bin/trycmd 3 /usr/runmvs/bin/cmd 900 /usr/bin/ssh on node n02p074
+Executing /usr/runmvs/bin/trycmd 3 /usr/runmvs/bin/cmd 900 /usr/bin/ssh on node n02p075
+Executing /usr/runmvs/bin/trycmd 3 /usr/runmvs/bin/cmd 900 /usr/bin/ssh on node n02p077
+Executing /usr/runmvs/bin/trycmd 3 /usr/runmvs/bin/cmd 900 /usr/bin/ssh on node n02p078
+Executing /usr/runmvs/bin/trycmd 3 /usr/runmvs/bin/cmd 900 /usr/bin/ssh on node n02p086
+Executing /usr/runmvs/bin/trycmd 3 /usr/runmvs/bin/cmd 900 /usr/bin/ssh on node n02p087
+Rsh on node n02p007 Ok
+Rsh on node n02p074 Ok
+Rsh on node n02p010 Ok
+Rsh on node n02p011 Ok
+Rsh on node n02p013 Ok
+Rsh on node n02p012 Ok
+Rsh on node n02p009 Ok
+Rsh on node n02p087 Ok
+Rsh on node n02p005 Ok
+Rsh on node n02p077 Ok
+Rsh on node n02p006 Ok
+Rsh on node n02p024 Ok
+Rsh on node n02p078 Ok
+Rsh on node n02p050 Ok
+Rsh on node n02p048 Ok
+Rsh on node n02p022 Ok
+Rsh on node n02p014 Ok
+Rsh on node n02p086 Ok
+Rsh on node n02p018 Ok
+Rsh on node n02p075 Ok
+confread: missing section "Locals" in /usr/runmvs/broadwell/users/an090501/queue/broadwell.pic_2d_openmp.1
+close_nodes: node n02p005 has been successfully freed
+close_nodes: node n02p006 has been successfully freed
+close_nodes: node n02p007 has been successfully freed
+close_nodes: node n02p009 has been successfully freed
+close_nodes: node n02p010 has been successfully freed
+close_nodes: node n02p011 has been successfully freed
+close_nodes: node n02p012 has been successfully freed
+close_nodes: node n02p013 has been successfully freed
+close_nodes: node n02p014 has been successfully freed
+close_nodes: node n02p018 has been successfully freed
+close_nodes: node n02p022 has been successfully freed
+close_nodes: node n02p024 has been successfully freed
+close_nodes: node n02p048 has been successfully freed
+close_nodes: node n02p050 has been successfully freed
+close_nodes: node n02p074 has been successfully freed
+close_nodes: node n02p075 has been successfully freed
+close_nodes: node n02p077 has been successfully freed
+close_nodes: node n02p078 has been successfully freed
+close_nodes: node n02p086 has been successfully freed
+close_nodes: node n02p087 has been successfully freed
+close_node: close_nodes script done
+11.11.22 13:22:14: manager: close_nodes done
+Unlocking nodes ...
+Exiting...

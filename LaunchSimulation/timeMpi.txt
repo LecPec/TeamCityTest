@@ -1,3 +1,3 @@
 Number of procs: 5
 Iter NtotElectrons NtotIons NtotPtcls Charge Pois Field Push Coll Full
-0 1386 1323 2709 1.48892e-07 2.12908e-08 8.07047e-08 5.64098e-08 8.60691e-09 0.00485706
+0 1386 1323 2709 5.86009e-07 3.51906e-08 5.40805e-07 6.54936e-08 1.0705e-08 0.0167451

@@ -1,0 +1,4 @@
+salloc: Granted job allocation 206755
+/home4/pstorage1/oivt20/klimkov/CPP_2D_PIC_MPI_COLLECTIVE/LaunchSimulation/broadwell.pic_2d_openmp.3/broadwell.pic_2d_openmp.3.sh: line 12: warning: setlocale: LC_CTYPE: cannot change locale (UTF-8): No such file or directory
+/home4/pstorage1/oivt20/klimkov/CPP_2D_PIC_MPI_COLLECTIVE/LaunchSimulation/broadwell.pic_2d_openmp.3/broadwell.pic_2d_openmp.3.sh: line 12: warning: setlocale: LC_CTYPE: cannot change locale (UTF-8): No such file or directory
+salloc: Job allocation 206755 has been revoked.

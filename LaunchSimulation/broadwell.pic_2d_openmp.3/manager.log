@@ -1,0 +1,42 @@
+
+***********
+Task started in 1 time of 1 at 11.11.22 07:51:17
+confread: missing section "Locals" in /usr/runmvs/broadwell/users/an090501/queue/broadwell.pic_2d_openmp.3
+******************* n02p038 **********************
+/common/runmvs/sbin/docker/cleanup_xp_com: line 1: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 7: docker: command not found
+/common/runmvs/sbin/docker/cleanup_xp_com: line 12: docker: command not found
+................................
+
+Total Duration: 0.009s
+Count: 32, Failed: 0, Skipped: 0
+Host n02p038 has been prepared
+error_flag=0
+Preparing nodes for user an090501
+/usr/runmvs/bin/prepare_nodes '/usr/runmvs/broadwell/users/an090501/queue/broadwell.pic_2d_openmp.3'
+Starting task process with pid 30947
+Pid of sleeper is 30948
+Sleeper 30948 started at 11.11.22 07:51:18 for 20 minutes, 0 seconds
+Signals set
+Sleeper 30948 got up at 11.11.22 08:11:18, testing end of task
+
+**** WARNING!!! The task has exhausted settled time!!! ****
+
+manager: sleeper 30948 was comleted with code 4
+Killing child tasks of pid 30947
+Executing /usr/runmvs/bin/stoptask.slurm /usr/runmvs/broadwell/users/an090501/queue/broadwell.pic_2d_openmp.3 /usr/runmvs/broadwell/users/an090501/run/broadwell.pic_2d_openmp.3 30947
+/usr/runmvs/bin/stoptask.slurm: Killing 206755 task by timeout...
+manager: process 30947 done at 11.11.22 08:11:25
+Creating done-file /usr/runmvs/broadwell/users/an090501/done/broadwell.pic_2d_openmp.3
+Done-file created successfully
+11.11.22 08:11:25: manager: closing nodes
+close_node: running "/usr/runmvs/bin/close_nodes /usr/runmvs/broadwell/users/an090501/queue/broadwell.pic_2d_openmp.3 no"
+Close nodes started
+Executing /usr/runmvs/bin/trycmd 3 /usr/runmvs/bin/cmd 900 /usr/bin/ssh on node n02p038
+Rsh on node n02p038 Ok
+confread: missing section "Locals" in /usr/runmvs/broadwell/users/an090501/queue/broadwell.pic_2d_openmp.3
+close_nodes: node n02p038 has been successfully freed
+close_node: close_nodes script done
+11.11.22 08:11:31: manager: close_nodes done
+Unlocking nodes ...
+Exiting...

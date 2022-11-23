@@ -178,17 +178,17 @@ void LinearFieldInterpolationMPI(Particles &particles, Matrix &Ex, Matrix &Ey, c
     Matrix Ex_(Nx, Ny);
     Matrix Ey_(Nx, Ny);
 
-    MPI_Scatterv(&particles.x[0], counts, displs, MPI_DOUBLE, particles.x_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&particles.y[0], counts, displs, MPI_DOUBLE, particles.y_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&particles.x[0], counts, displs, MPI_DOUBLE, particles.x_->data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&particles.y[0], counts, displs, MPI_DOUBLE, particles.y_->data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Scatterv(&Ex.data[0], countsMatrix, displsMatrix, MPI_DOUBLE, &Ex_.data[0], Nx * Ny, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Scatterv(&Ey.data[0], countsMatrix, displsMatrix, MPI_DOUBLE, &Ey_.data[0], Nx * Ny, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&particles.Ex[0], counts, displs, MPI_DOUBLE, particles.Ex_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&particles.Ey[0], counts, displs, MPI_DOUBLE, particles.Ey_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&particles.Ex[0], counts, displs, MPI_DOUBLE, particles.Ex_->data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&particles.Ey[0], counts, displs, MPI_DOUBLE, particles.Ey_->data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-    __LinearFieldInterpolation(particles.Ex_.data(), particles.Ey_.data(), particles.x_.data(), particles.y_.data(), Ex_.data_const_ptr(), Ey_.data_const_ptr(), grid, numOfPtclsToCalculate);
+    __LinearFieldInterpolation(particles.Ex_->data(), particles.Ey_->data(), particles.x_->data(), particles.y_->data(), Ex_.data_const_ptr(), Ey_.data_const_ptr(), grid, numOfPtclsToCalculate);
     
-    MPI_Gatherv(particles.Ex_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &particles.Ex[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(particles.Ey_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &particles.Ey[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(particles.Ex_->data(), numOfPtclsToCalculate, MPI_DOUBLE, &particles.Ex[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(particles.Ey_->data(), numOfPtclsToCalculate, MPI_DOUBLE, &particles.Ey[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     if (iteration % 100 == 0)
     {

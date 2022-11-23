@@ -54,9 +54,7 @@ void UpdateSingleVelocityBoris(scalar &vel_x, scalar &vel_y, scalar &vel_z, cons
 
 void UpdatePosition(scalar *pos_x, scalar *pos_y, const scalar *vel_x, const scalar *vel_y, const scalar dt,
                     const int Ntot) {
-    auto *settings = new SettingNames();
-    int numThreads = settings->GetNumberOfThreadsPerCore();
-    #pragma omp parallel for num_threads(numThreads)
+    #pragma omp for
     for (int ip = 0; ip < Ntot; ip++) {
         pos_x[ip] += vel_x[ip]*dt;
         pos_y[ip] += vel_y[ip]*dt;
@@ -66,9 +64,7 @@ void UpdatePosition(scalar *pos_x, scalar *pos_y, const scalar *vel_x, const sca
 void UpdateVelocity(scalar *vel_x, scalar *vel_y, scalar *vel_z, const scalar *Ex, const scalar *Ey,
                     const scalar *Bx, const scalar *By, const scalar *Bz, const scalar dt, const scalar q,
                     const scalar m, const int Ntot) {
-    auto *settings = new SettingNames();
-    int numThreads = settings->GetNumberOfThreadsPerCore();
-    #pragma omp parallel for num_threads(numThreads)
+    #pragma omp for
     for (int ip = 0; ip < Ntot; ip++) {
         UpdateSingleVelocityBoris(vel_x[ip], vel_y[ip], vel_z[ip], Ex[ip], Ey[ip], Bx[ip], By[ip], Bz[ip], dt, q, m);
     }
@@ -78,7 +74,9 @@ void ParticlePush(scalar *pos_x, scalar *pos_y, scalar *vel_x, scalar *vel_y, sc
                   const scalar *Ex, const scalar *Ey,
                   const scalar *Bx, const scalar *By, const scalar *Bz,
                   const scalar dt, const scalar q, const scalar m, const int Ntot) {
-    //#pragma omp parallel num_threads(NUM_THREADS)
+    auto *settings = new SettingNames();
+    int numThreads = settings->GetNumberOfThreadsPerCore();
+    #pragma omp parallel num_threads(numThreads)
     {
         UpdateVelocity(vel_x, vel_y, vel_z, Ex, Ey, Bx, By, Bz, dt, q, m, Ntot);
         UpdatePosition(pos_x, pos_y, vel_x, vel_y, dt, Ntot);
