@@ -350,6 +350,7 @@ void test_simulation_circle_gyro_new() {
         timeFout << "Number of procs: " << commSize << endl; 
         timeFout << "Iter NtotElectrons NtotIons NtotPtcls Charge Pois Field Push Coll Full" << endl;
     }
+    omp_set_num_threads(10);
     for (int it = 0; it < it_num; it++) 
     {
         tFull0 += omp_get_wtime(); //time of the calculation
@@ -595,7 +596,7 @@ void test_simulation_circle_gyro_new() {
                 ions.GetParticlesConfiguration();
             }
 
-            if (it == 10)
+            if (it == 1000000)
             {
                 electrons.GetParticlesConfiguration();
                 ions.GetParticlesConfiguration();
@@ -639,7 +640,7 @@ void test_simulation_circle_gyro_new() {
 
         if (rank == 0)
         {
-            if (it % logStep == 0){
+            /*if (it % logStep == 0){
                 cout << electrons.get_Ntot() << ' ' << ions.get_Ntot() << endl;
                 string phi_pth = "phi_hist/phi_" + to_string(it) + ".txt"; 
                 string rho_i_pth = "rho_i_hist/rho_i_" + to_string(it) + ".txt"; 
@@ -655,7 +656,7 @@ void test_simulation_circle_gyro_new() {
                 PrintAnodeCurrentParticles(electrons.numPtclsOnAnode, ions.numPtclsOnAnode, it, 500, dt);
                 electrons.ZeroAnodeCurrent();
                 ions.ZeroAnodeCurrent();
-            }
+            }*/
         }
     }
 

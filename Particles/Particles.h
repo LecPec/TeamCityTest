@@ -34,16 +34,16 @@ public:
     vector<scalar> Bz;
     vector<scalar> Ex;
     vector<scalar> Ey;
-    vector<scalar> *vx_ = new vector<scalar>();
-    vector<scalar> *vy_ = new vector<scalar>();
-    vector<scalar> *vz_ = new vector<scalar>();
-    vector<scalar> *x_ = new vector<scalar>();
-    vector<scalar> *y_ = new vector<scalar>();
-    vector<scalar> *Bx_ = new vector<scalar>();
-    vector<scalar> *By_ = new vector<scalar>();
-    vector<scalar> *Bz_ = new vector<scalar>();
-    vector<scalar> *Ex_ = new vector<scalar>();
-    vector<scalar> *Ey_ = new vector<scalar>();
+    vector<scalar> vx_;
+    vector<scalar> vy_;
+    vector<scalar> vz_;
+    vector<scalar> x_;
+    vector<scalar> y_;
+    vector<scalar> Bx_;
+    vector<scalar> By_;
+    vector<scalar> Bz_;
+    vector<scalar> Ex_;
+    vector<scalar> Ey_;
     Particles(scalar m, scalar q, int N, scalar N_per_macro = 1);
     Particles(scalar m, scalar q, int N, string type, scalar N_per_macro = 1);
 

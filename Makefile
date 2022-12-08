@@ -1,17 +1,20 @@
-CC=mpic++ -std=c++11 -O3 -Xpreprocessor -fopenmp -lomp
+CC=mpicxx -std=c++11 -O3 -Xpreprocessor -fopenmp -lomp
 #CC=g++ -pg -std=c++11 -O3 -fopenmp
 
 all: pic_2d_openmp
 
-pic_2d_openmp: Names.o PoissonSolver.o Matrix.o Pusher.o Particles.o Grid.o Interpolation.o ParticleEmission.o ParticleLeave.o Collision.o NullCollisions.o NeutralGas.o Logger.o ParticlesLogger.o PoissonSolverCircle.o EnergyCrossSection.o Helpers.o GyroKineticParticles.o GyroKineticPusher.o main.o
-	$(CC) -o LaunchSimulation/pic_2d_openmp Names.o PoissonSolver.o Matrix.o Particles.o Pusher.o Grid.o Interpolation.o ParticleEmission.o ParticleLeave.o Collision.o NullCollisions.o NeutralGas.o Logger.o ParticlesLogger.o PoissonSolverCircle.o EnergyCrossSection.o Helpers.o GyroKineticParticles.o GyroKineticPusher.o main.o
+pic_2d_openmp: Names.o Exception.o PoissonSolver.o Matrix.o Pusher.o Particles.o Grid.o Interpolation.o ParticleEmission.o ParticleLeave.o Collision.o NullCollisions.o NeutralGas.o Logger.o ParticlesLogger.o PoissonSolverCircle.o EnergyCrossSection.o Helpers.o GyroKineticParticles.o GyroKineticPusher.o main.o
+	$(CC) -o LaunchSimulation/pic_2d_openmp Names.o Exception.o PoissonSolver.o Matrix.o Particles.o Pusher.o Grid.o Interpolation.o ParticleEmission.o ParticleLeave.o Collision.o NullCollisions.o NeutralGas.o Logger.o ParticlesLogger.o PoissonSolverCircle.o EnergyCrossSection.o Helpers.o GyroKineticParticles.o GyroKineticPusher.o main.o
 	rm -rf *.o
 
 main.o: main.cpp
 	$(CC) -c main.cpp
 
 Names.o: Tools/Names.cpp
-	$(CC) -c Tools/Names.cpp	
+	$(CC) -c Tools/Names.cpp
+
+Exception.o: Tools/Exception.cpp
+	$(CC) -c Tools/Exception.cpp	
 
 PoissonSolver.o: Field/PoissonSolver.cpp
 	$(CC) -c Field/PoissonSolver.cpp

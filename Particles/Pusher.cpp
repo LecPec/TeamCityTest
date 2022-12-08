@@ -6,7 +6,6 @@
 //#include "../Tools/Names.h"
 #include <iostream>
 #include <omp.h>
-#define NUM_THREADS 100
 #define E_M 9.10938356e-31
 
 void CrossProduct(const scalar v1[], const scalar v2[], scalar result[]) {
@@ -52,7 +51,7 @@ void UpdateSingleVelocityBoris(scalar &vel_x, scalar &vel_y, scalar &vel_z, cons
     vel_z = v_plus[2];
 }
 
-void UpdatePosition(scalar *pos_x, scalar *pos_y, const scalar *vel_x, const scalar *vel_y, const scalar dt,
+void UpdatePosition(vector<scalar> &pos_x, vector<scalar> &pos_y, const vector<scalar> &vel_x, const vector<scalar> &vel_y, const scalar dt,
                     const int Ntot) {
     #pragma omp for
     for (int ip = 0; ip < Ntot; ip++) {
@@ -61,8 +60,8 @@ void UpdatePosition(scalar *pos_x, scalar *pos_y, const scalar *vel_x, const sca
     }
 }
 
-void UpdateVelocity(scalar *vel_x, scalar *vel_y, scalar *vel_z, const scalar *Ex, const scalar *Ey,
-                    const scalar *Bx, const scalar *By, const scalar *Bz, const scalar dt, const scalar q,
+void UpdateVelocity(vector<scalar> &vel_x, vector<scalar> &vel_y, vector<scalar> &vel_z, const vector<scalar> &Ex, const vector<scalar> &Ey,
+                    const vector<scalar> &Bx, const vector<scalar> &By, const vector<scalar> &Bz, const scalar dt, const scalar q,
                     const scalar m, const int Ntot) {
     #pragma omp for
     for (int ip = 0; ip < Ntot; ip++) {
@@ -70,13 +69,13 @@ void UpdateVelocity(scalar *vel_x, scalar *vel_y, scalar *vel_z, const scalar *E
     }
 }
 
-void ParticlePush(scalar *pos_x, scalar *pos_y, scalar *vel_x, scalar *vel_y, scalar *vel_z,
-                  const scalar *Ex, const scalar *Ey,
-                  const scalar *Bx, const scalar *By, const scalar *Bz,
+void ParticlePush(vector<scalar> &pos_x, vector<scalar> &pos_y, vector<scalar> &vel_x, vector<scalar> &vel_y, vector<scalar> &vel_z,
+                  const vector<scalar> &Ex, const vector<scalar> &Ey,
+                  const vector<scalar> &Bx, const vector<scalar> &By, const vector<scalar> &Bz,
                   const scalar dt, const scalar q, const scalar m, const int Ntot) {
     auto *settings = new SettingNames();
     int numThreads = settings->GetNumberOfThreadsPerCore();
-    #pragma omp parallel num_threads(numThreads)
+    #pragma omp parallel //num_threads(numThreads)
     {
         UpdateVelocity(vel_x, vel_y, vel_z, Ex, Ey, Bx, By, Bz, dt, q, m, Ntot);
         UpdatePosition(pos_x, pos_y, vel_x, vel_y, dt, Ntot);
