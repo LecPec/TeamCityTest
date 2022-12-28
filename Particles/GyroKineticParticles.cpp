@@ -1,21 +1,18 @@
-//
-// Created by Vladimir Smirnov on 27.10.2021.
-//
-
 #include "GyroKineticParticles.h"
+#include "../Tools/Exception.h"
 #include "GyroKineticPusher.h"
 #include <cassert>
 
 void GyroKineticParticles::vel_pusher(scalar dt) {
-    GyroUpdateVelocity(vx_c.data(), vy_c.data(), vz_c.data(),
-            vx.data(), vy.data(), vz.data(),Ex.data(), Ey.data(),
-            Bx.data(), By.data(), Bz.data(), dt, charge, mass, Ntot);
+    GyroUpdateVelocity(vx_c, vy_c, vz_c,
+            vx, vy, vz,Ex, Ey,
+            Bx, By, Bz, dt, charge, mass, Ntot);
 }
 
 void GyroKineticParticles::pusher(scalar dt) {
-    GyroParticlePush(x.data(), y.data(), vx_c.data(), vy_c.data(), vz_c.data(),
-            vx.data(), vy.data(), vz.data(), Ex.data(), Ey.data(),
-            Bx.data(), By.data(), Bz.data(), dt, charge, mass, Ntot);
+    GyroParticlePush(x, y, vx_c, vy_c, vz_c,
+            vx, vy, vz, Ex, Ey,
+            Bx, By, Bz, dt, charge, mass, Ntot);
 }
 
 void GyroKineticParticles::set_velocity(const int ptcl_idx, const array<scalar, 3> &velocity) {
@@ -34,6 +31,9 @@ GyroKineticParticles::GyroKineticParticles(scalar m, scalar q, int N, string typ
     vx_c.resize(Ntot);
     vy_c.resize(Ntot);
     vz_c.resize(Ntot);
+    vx_c_.resize(Ntot);
+    vy_c_.resize(Ntot);
+    vz_c_.resize(Ntot);
 }
 
 void GyroKineticParticles::append(const array<scalar, 2> &position, const array<scalar, 3> &velocity) {
@@ -51,7 +51,6 @@ void GyroKineticParticles::pop(int ptcl_idx) {
 }
 
 void GyroKineticParticles::pop_list(const vector<int> &ptcl_idx_list) {
-    //Particles::pop_list(ptcl_idx_list);
     assert(x.size() == Ntot);
     assert(ptcl_idx_list.size() <= Ntot);
 
@@ -93,146 +92,82 @@ void GyroKineticParticles::pop_list(const vector<int> &ptcl_idx_list) {
     Ntot = x.size();
 }
 
-void GyroKineticParticles::GyroPusherMPI(scalar dt)
+void GyroKineticParticles::GyroPusherMPI(scalar dt, int iteration)
 {
-    int rank, commSize;
-    MPI_Status status;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &commSize);
-    scalar mass = this->get_mass() * this->get_ptcls_per_macro();
-    scalar charge = this->get_charge() * this->get_ptcls_per_macro();
-
-    if (rank == 0){
-        int Ntot = get_Ntot();
+    try
+    {
+        int rank, commSize;
+        MPI_Status status;
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        MPI_Comm_size(MPI_COMM_WORLD, &commSize);
         int Ntot_per_proc = Ntot / commSize;
-        int Ntot_per_0_proc = Ntot / commSize + Ntot % commSize;
+        int Ntot_per_0_proc = Ntot_per_proc + Ntot % commSize;
+        scalar mass = this->get_mass() * this->get_ptcls_per_macro();
+        scalar charge = this->get_charge() * this->get_ptcls_per_macro();
 
-        for (int proc = 1; proc < commSize; ++proc){
-            MPI_Send(&Ntot_per_proc, 1, MPI_INT, proc, 5665, MPI_COMM_WORLD);
-            MPI_Send(&(x)[Ntot_per_0_proc + (proc - 1) * Ntot_per_proc], Ntot_per_proc, MPI_DOUBLE, proc, 660 * 71, MPI_COMM_WORLD);
-            MPI_Send(&(y)[Ntot_per_0_proc + (proc - 1) * Ntot_per_proc], Ntot_per_proc, MPI_DOUBLE, proc, 661 * 71, MPI_COMM_WORLD);
-            MPI_Send(&(vx_c)[Ntot_per_0_proc + (proc - 1) * Ntot_per_proc], Ntot_per_proc, MPI_DOUBLE, proc, 141 * 71, MPI_COMM_WORLD);
-            MPI_Send(&(vy_c)[Ntot_per_0_proc + (proc - 1) * Ntot_per_proc], Ntot_per_proc, MPI_DOUBLE, proc, 142 * 71, MPI_COMM_WORLD);
-            MPI_Send(&(vz_c)[Ntot_per_0_proc + (proc - 1) * Ntot_per_proc], Ntot_per_proc, MPI_DOUBLE, proc, 143 * 71, MPI_COMM_WORLD);
-            MPI_Send(&(vx)[Ntot_per_0_proc + (proc - 1) * Ntot_per_proc], Ntot_per_proc, MPI_DOUBLE, proc, 662 * 71, MPI_COMM_WORLD);
-            MPI_Send(&(vy)[Ntot_per_0_proc + (proc - 1) * Ntot_per_proc], Ntot_per_proc, MPI_DOUBLE, proc, 663 * 71, MPI_COMM_WORLD);
-            MPI_Send(&(vz)[Ntot_per_0_proc + (proc - 1) * Ntot_per_proc], Ntot_per_proc, MPI_DOUBLE, proc, 664 * 71, MPI_COMM_WORLD);
-            MPI_Send(&(Ex)[Ntot_per_0_proc + (proc - 1) * Ntot_per_proc], Ntot_per_proc, MPI_DOUBLE, proc, 665 * 71, MPI_COMM_WORLD);
-            MPI_Send(&(Ey)[Ntot_per_0_proc + (proc - 1) * Ntot_per_proc], Ntot_per_proc, MPI_DOUBLE, proc, 666 * 71, MPI_COMM_WORLD);
-            MPI_Send(&(Bx)[Ntot_per_0_proc + (proc - 1) * Ntot_per_proc], Ntot_per_proc, MPI_DOUBLE, proc, 667 * 71, MPI_COMM_WORLD);
-            MPI_Send(&(By)[Ntot_per_0_proc + (proc - 1) * Ntot_per_proc], Ntot_per_proc, MPI_DOUBLE, proc, 668 * 71, MPI_COMM_WORLD);
-            MPI_Send(&(Bz)[Ntot_per_0_proc + (proc - 1) * Ntot_per_proc], Ntot_per_proc, MPI_DOUBLE, proc, 6699 * 71, MPI_COMM_WORLD);
+        MPI_Bcast(&Ntot_per_proc, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&Ntot_per_0_proc, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        int numOfPtclsToCalculate  = (rank == 0) ? Ntot_per_0_proc : Ntot_per_proc;
+
+        if (numOfPtclsToCalculate <= 0)
+        {
+            throw new Bug("ZERO PARTICLES TO PROCEED ON PROCESS " + to_string(rank));
         }
 
-        GyroParticlePush(x.data(), y.data(), vx_c.data(), vy_c.data(), vz_c.data(),
-                    vx.data(), vy.data(), vz.data(),
-                    Ex.data(), Ey.data(), Bx.data(), By.data(), Bz.data(),
-                    dt, charge, mass, Ntot_per_0_proc);
+        int counts[commSize], displs[commSize];
+        counts[0] = Ntot_per_0_proc;
+        displs[0] = 0;
+        for (int i = 1; i < commSize; ++i)
+        {
+            counts[i] = Ntot_per_proc;
+            displs[i] = Ntot_per_0_proc + (i - 1) * Ntot_per_proc;
+        }
 
-        vector<scalar> x_recv;
-        vector<scalar> y_recv;
-        vector<scalar> vx_c_recv;
-        vector<scalar> vy_c_recv;
-        vector<scalar> vz_c_recv;
-        vector<scalar> vx_recv;
-        vector<scalar> vy_recv;
-        vector<scalar> vz_recv;
+        MPI_Scatterv(&x[0], counts, displs, MPI_DOUBLE, x_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Scatterv(&y[0], counts, displs, MPI_DOUBLE, y_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Scatterv(&vx[0], counts, displs, MPI_DOUBLE, vx_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Scatterv(&vy[0], counts, displs, MPI_DOUBLE, vy_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Scatterv(&vz[0], counts, displs, MPI_DOUBLE, vz_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Scatterv(&vx_c[0], counts, displs, MPI_DOUBLE, vx_c_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Scatterv(&vy_c[0], counts, displs, MPI_DOUBLE, vy_c_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Scatterv(&vz_c[0], counts, displs, MPI_DOUBLE, vz_c_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Scatterv(&Ex[0], counts, displs, MPI_DOUBLE, Ex_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Scatterv(&Ey[0], counts, displs, MPI_DOUBLE, Ey_.data(), numOfPtclsToCalculate, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-        x_recv.resize(Ntot_per_proc);
-        y_recv.resize(Ntot_per_proc);
-        vx_c_recv.resize(Ntot_per_proc);
-        vy_c_recv.resize(Ntot_per_proc);
-        vz_c_recv.resize(Ntot_per_proc);
-        vx_recv.resize(Ntot_per_proc);
-        vy_recv.resize(Ntot_per_proc);
-        vz_recv.resize(Ntot_per_proc);
+        GyroParticlePush(x_, y_, vx_c_, vy_c_, vz_c_, vx_, vy_, vz_,
+                        Ex_, Ey_, Bx_, By_, Bz_, dt, charge, mass, numOfPtclsToCalculate);
 
-        for (int proc = 1; proc < commSize; ++proc){
-            MPI_Recv(&x_recv[0], Ntot_per_proc, MPI_DOUBLE, proc, 669 * 71, MPI_COMM_WORLD, &status);
-            MPI_Recv(&y_recv[0], Ntot_per_proc, MPI_DOUBLE, proc, 6610 * 71, MPI_COMM_WORLD, &status);
-            MPI_Recv(&vx_c_recv[0], Ntot_per_proc, MPI_DOUBLE, proc, 151 * 71, MPI_COMM_WORLD, &status);
-            MPI_Recv(&vy_c_recv[0], Ntot_per_proc, MPI_DOUBLE, proc, 152 * 71, MPI_COMM_WORLD, &status);
-            MPI_Recv(&vz_c_recv[0], Ntot_per_proc, MPI_DOUBLE, proc, 153 * 71, MPI_COMM_WORLD, &status);
-            MPI_Recv(&vx_recv[0], Ntot_per_proc, MPI_DOUBLE, proc, 6611 * 71, MPI_COMM_WORLD, &status);
-            MPI_Recv(&vy_recv[0], Ntot_per_proc, MPI_DOUBLE, proc, 6612 * 71, MPI_COMM_WORLD, &status);
-            MPI_Recv(&vz_recv[0], Ntot_per_proc, MPI_DOUBLE, proc, 6613 * 71, MPI_COMM_WORLD, &status);
+        MPI_Gatherv(x_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &x[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Gatherv(y_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &y[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Gatherv(vx_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &vx[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Gatherv(vy_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &vy[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Gatherv(vz_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &vz[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Gatherv(vx_c_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &vx_c[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Gatherv(vy_c_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &vy_c[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Gatherv(vz_c_.data(), numOfPtclsToCalculate, MPI_DOUBLE, &vz_c[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-            int start = Ntot_per_0_proc + (proc - 1) * Ntot_per_proc;
-            int finish = Ntot_per_0_proc + proc * Ntot_per_proc;
-            int ip_proc = 0;
-            for (int ip = start; ip < finish; ++ip){
-                x[ip] = x_recv[ip_proc];
-                y[ip] = y_recv[ip_proc];
-                vx_c[ip] = vx_c_recv[ip_proc];
-                vy_c[ip] = vy_c_recv[ip_proc];
-                vz_c[ip] = vz_c_recv[ip_proc];
-                vx[ip] = vx_recv[ip_proc];
-                vy[ip] = vy_recv[ip_proc];
-                vz[ip] = vz_recv[ip_proc];
-                ip_proc++;
-            }
+        if (
+            x_.capacity() > numOfPtclsToCalculate * sizeof(double) ||
+            y_.capacity() > numOfPtclsToCalculate * sizeof(double) ||
+            vx_.capacity() > numOfPtclsToCalculate * sizeof(double) ||
+            vy_.capacity() > numOfPtclsToCalculate * sizeof(double) ||
+            vz_.capacity() > numOfPtclsToCalculate * sizeof(double) ||
+            Bx_.capacity() > numOfPtclsToCalculate * sizeof(double) ||
+            By_.capacity() > numOfPtclsToCalculate * sizeof(double) ||
+            Bz_.capacity() > numOfPtclsToCalculate * sizeof(double) ||
+            Ex_.capacity() > numOfPtclsToCalculate * sizeof(double) ||
+            Ey_.capacity() > numOfPtclsToCalculate * sizeof(double) ||
+            vx_c_.capacity() > numOfPtclsToCalculate * sizeof(double) ||
+            vy_c_.capacity() > numOfPtclsToCalculate * sizeof(double) ||
+            vz_c_.capacity() > numOfPtclsToCalculate * sizeof(double)
+        )
+        {
+            throw new Bug("MEMORY LOSS");
         }
     }
-    else{
-        int Ntot_per_proc = 0;
-        MPI_Recv(&Ntot_per_proc, 1, MPI_INT, 0, 5665, MPI_COMM_WORLD, &status);
-
-        vector<scalar> x_proc;
-        vector<scalar> y_proc;
-        vector<scalar> vx_c_proc;
-        vector<scalar> vy_c_proc;
-        vector<scalar> vz_c_proc;
-        vector<scalar> vx_proc;
-        vector<scalar> vy_proc;
-        vector<scalar> vz_proc;
-        vector<scalar> Ex_proc;
-        vector<scalar> Ey_proc;
-        vector<scalar> Bx_proc;
-        vector<scalar> By_proc;
-        vector<scalar> Bz_proc;
-        
-        x_proc.resize(Ntot_per_proc);
-        y_proc.resize(Ntot_per_proc);
-        vx_c_proc.resize(Ntot_per_proc);
-        vy_c_proc.resize(Ntot_per_proc);
-        vz_c_proc.resize(Ntot_per_proc);
-        vx_proc.resize(Ntot_per_proc);
-        vy_proc.resize(Ntot_per_proc);
-        vz_proc.resize(Ntot_per_proc);
-        Ex_proc.resize(Ntot_per_proc);
-        Ey_proc.resize(Ntot_per_proc);
-        Bx_proc.resize(Ntot_per_proc);
-        By_proc.resize(Ntot_per_proc);
-        Bz_proc.resize(Ntot_per_proc);
-
-        MPI_Recv(&x_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 660 * 71, MPI_COMM_WORLD, &status);
-        MPI_Recv(&y_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 661 * 71, MPI_COMM_WORLD, &status);
-        MPI_Recv(&vx_c_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 141 * 71, MPI_COMM_WORLD, &status);
-        MPI_Recv(&vy_c_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 142 * 71, MPI_COMM_WORLD, &status);
-        MPI_Recv(&vz_c_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 143 * 71, MPI_COMM_WORLD, &status);
-        MPI_Recv(&vx_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 662 * 71, MPI_COMM_WORLD, &status);
-        MPI_Recv(&vy_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 663 * 71, MPI_COMM_WORLD, &status);
-        MPI_Recv(&vz_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 664 * 71, MPI_COMM_WORLD, &status);
-        MPI_Recv(&Ex_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 665 * 71, MPI_COMM_WORLD, &status);
-        MPI_Recv(&Ey_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 666 * 71, MPI_COMM_WORLD, &status);
-        MPI_Recv(&Bx_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 667 * 71, MPI_COMM_WORLD, &status);
-        MPI_Recv(&By_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 668 * 71, MPI_COMM_WORLD, &status);
-        MPI_Recv(&Bz_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 6699 * 71, MPI_COMM_WORLD, &status);
-        
-
-        GyroParticlePush(x_proc.data(), y_proc.data(), vx_c_proc.data(), vy_c_proc.data(), vz_c_proc.data(),
-                    vx_proc.data(), vy_proc.data(), vz_proc.data(),
-                    Ex_proc.data(), Ey_proc.data(), Bx_proc.data(), By_proc.data(), Bz_proc.data(),
-                    dt, charge, mass, Ntot_per_proc);  
-
-        MPI_Send(&x_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 669 * 71, MPI_COMM_WORLD);
-        MPI_Send(&y_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 6610 * 71, MPI_COMM_WORLD);
-        MPI_Send(&vx_c_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 151 * 71, MPI_COMM_WORLD);
-        MPI_Send(&vy_c_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 152 * 71, MPI_COMM_WORLD);
-        MPI_Send(&vz_c_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 153 * 71, MPI_COMM_WORLD);
-        MPI_Send(&vx_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 6611 * 71, MPI_COMM_WORLD);
-        MPI_Send(&vy_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 6612 * 71, MPI_COMM_WORLD);
-        MPI_Send(&vz_proc[0], Ntot_per_proc, MPI_DOUBLE, 0, 6613 * 71, MPI_COMM_WORLD);
+    catch(const std::exception& e)
+    {
+        std::cerr << "During gyro particles pusher: " << e.what() << '\n';
     }
 }
 
@@ -324,4 +259,20 @@ void GyroKineticParticles::InitConfigurationFromFile()
 
         numOfParticle++;
     }
+}
+
+void GyroKineticParticles::Resize(int newSize)
+{
+    Particles::Resize(newSize);
+    vx_c_.resize(newSize);
+    vy_c_.resize(newSize);
+    vz_c_.resize(newSize);
+}
+
+void GyroKineticParticles::ShrinkToFit()
+{
+    Particles::ShrinkToFit();
+    vx_c_.shrink_to_fit();
+    vy_c_.shrink_to_fit();
+    vz_c_.shrink_to_fit();
 }

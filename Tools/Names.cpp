@@ -63,3 +63,13 @@ std::string ParticlesConstant::InitialConfigurationFolderOut()
 {
     return initConfigurationFolderOut;
 }
+
+SettingNames::SettingNames()
+{
+    numberOfThreadsPerCore = 10;
+}
+
+int SettingNames::GetNumberOfThreadsPerCore()
+{
+    return numberOfThreadsPerCore;
+}

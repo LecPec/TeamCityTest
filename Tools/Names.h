@@ -27,3 +27,12 @@ public:
     std::string InitialConfigurationFolderIn();
     std::string InitialConfigurationFolderOut();
 };
+
+class SettingNames
+{
+private:
+    int numberOfThreadsPerCore;
+public:
+    SettingNames();
+    int GetNumberOfThreadsPerCore();
+};
